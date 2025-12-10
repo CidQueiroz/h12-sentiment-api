@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    # Certifique-se de que a aplicação Spring Boot depende do microserviço Python estar pronto
+    depends_on:
+      - microservice
+    environment:
+      # Exemplo: Se o seu Spring Boot precisar saber o host do microservice Python
+      # Adapte esta variável de ambiente conforme a configuração da sua aplicação Java
+      PYTHON_MICROSERVICE_URL: http://microservice:8000
+
+  microservice:
+    build:
+      context: ./microservice
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    # Opcional: Volumes para persistir dados ou carregar modelos, se necessário
+    # volumes:
+    #   - ./data-science/models:/app/models
+
