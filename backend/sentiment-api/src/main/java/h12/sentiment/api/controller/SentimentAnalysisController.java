@@ -21,9 +21,9 @@ public class SentimentAnalysisController {
   private SentimentAnalysisService service;
 
   @PostMapping
-  public ResponseEntity<Object> createAnalysis(@RequestBody InputSentimentDTO inputSentimentDTO) {
-    // var sentiment = service.createAnalysis(inputSentimentDTO);
-    return ResponseEntity.status(HttpStatus.OK).body("Sentiment analysis created");
+  public ResponseEntity<OutputSentimentDTO> createAnalysis(@RequestBody InputSentimentDTO inputSentimentDTO) {
+    var sentiment = service.createAnalysis(inputSentimentDTO);
+    return ResponseEntity.status(HttpStatus.OK).body(sentiment);
   }
 
   @GetMapping
