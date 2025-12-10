@@ -1,22 +1,15 @@
 package h12.sentiment.api.model;
 
 import h12.sentiment.api.dto.InputSentimentDTO;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SentimentAnalysis {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
   private String text;
   private String previsao;
