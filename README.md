@@ -2,7 +2,7 @@
 
 RESUMO DO KICK-OFF: PROJETO SENTIMENT-API Data: 09/12/2025 | Facilitador: Cidirclay Queiroz
 
-Olá, time! Ótima reunião hoje. Definimos o escopo, dividimos os times e traçamos a arquitetura do nosso MVP.
+Definimos o escopo, dividimos os times e traçamos a arquitetura do nosso MVP.
 
 Para quem não pôde participar (e para registro oficial), seguem as definições:
 
