@@ -1,0 +1,7 @@
+# for Windows command files
+*.cmd text eol=crlf
+
+# shell scripts, code, docs -> LF
+*.sh text eol=lf
+*.java text eol=lf
+*.md text eol=lf
