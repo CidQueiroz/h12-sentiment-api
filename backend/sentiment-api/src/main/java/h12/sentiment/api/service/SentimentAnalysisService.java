@@ -7,8 +7,6 @@ import h12.sentiment.api.dto.OutputSentimentDTO;
 
 @Service
 public interface SentimentAnalysisService {
-
-  OutputSentimentDTO createAnalysis(InputSentimentDTO input);
-  OutputSentimentDTO getOneAnalysis();
-
+    OutputSentimentDTO createAnalysis(InputSentimentDTO input);
+    OutputSentimentDTO getOneAnalysis();
 }

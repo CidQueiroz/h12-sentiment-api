@@ -2,10 +2,12 @@ package h12.sentiment.api.service;
 
 import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
+@Profile("real")
 public class SentimentAnalysisServiceImpl implements SentimentAnalysisService{
 
     private final WebClient sentimentWebClient;
