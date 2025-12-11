@@ -4,10 +4,10 @@
 
 Este projeto implementa uma API robusta para classificar o sentimento de textos (reviews, comentários) em tempo real. O MVP já possui a arquitetura de **Microserviços** totalmente definida e mesclada na `main`.
 
-**O TIME (Squads):** 
-🧠 Squad Data Science: Rayra, Moisés, Daniel.
-⚙️ Squad Backend (Java): Ailson, Leandro, Ana Fernandez.
-🏗️ Arquitetura & DevOps: Cidirclay.
+## **O TIME (Squads):** 
+* **🧠 Squad Data Science:** Rayra, Moisés, Daniel.
+* **⚙️ Squad Backend (Java):** Ailson, Leandro, Ana Fernandez.
+* **🏗️ Arquitetura & DevOps:** Cidirclay.
 
 ## 🛠️ Tecnologias Principais
 
@@ -47,12 +47,11 @@ Para rodar a arquitetura completa (Java Gateway + Microserviço Python) com um �
 
 Clone o Repositório: git clone https://github.com/CidQueiroz/h12-sentiment-api.git
 
-Navegue para o Diretório Raiz:
- - cd h12-sentiment-api
+Navegue para o Diretório Raiz: cd h12-sentiment-api
 
- - Inicie os Microserviços:docker-compose up --build
+Inicie os Microserviços:docker-compose up --build
 
- - A API Java estará disponível em http://localhost:8080/api/sentiment.
+A API Java estará disponível em http://localhost:8080/api/sentiment.
 
 ### Próximos Passos: 
 
