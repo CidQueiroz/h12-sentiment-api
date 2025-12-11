@@ -4,8 +4,10 @@
 
 Este projeto implementa uma API robusta para classificar o sentimento de textos (reviews, comentários) em tempo real. O MVP já possui a arquitetura de **Microserviços** totalmente definida e mesclada na `main`.
 
-**Time:** 
-Cidirclay (Tech Lead), Ailson, Leandro, Ana Consuelo, Rayra, Moisés, Daniel.
+**O TIME (Squads):** 
+🧠 Squad Data Science: Rayra, Moisés, Daniel.
+⚙️ Squad Backend (Java): Ailson, Leandro, Ana Fernandez.
+🏗️ Arquitetura & DevOps: Cidirclay.
 
 ## 🛠️ Tecnologias Principais
 
