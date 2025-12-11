@@ -6,15 +6,9 @@ import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
 
 @Service
-public class SentimentAnalysisService {
+public interface SentimentAnalysisService {
 
-  public OutputSentimentDTO createAnalysis(InputSentimentDTO inputSentimentDTO) {
-    // var sentimentAnalysis = new SentimentAnalysis(inputSentimentDTO);
-    return new OutputSentimentDTO("Positive", 0.95);
-  }
-
-  public OutputSentimentDTO getOneAnalysis() {
-    return new OutputSentimentDTO("Positive", 0.95);
-  }
+  OutputSentimentDTO createAnalysis(InputSentimentDTO input);
+  OutputSentimentDTO getOneAnalysis();
 
 }

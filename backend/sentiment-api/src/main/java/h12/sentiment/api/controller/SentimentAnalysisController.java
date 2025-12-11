@@ -14,11 +14,14 @@ import h12.sentiment.api.dto.OutputSentimentDTO;
 import h12.sentiment.api.service.SentimentAnalysisService;
 
 @RestController
-@RequestMapping("sentiment")
+@RequestMapping("/sentiment")
 public class SentimentAnalysisController {
 
-  @Autowired
   private SentimentAnalysisService service;
+
+  public SentimentAnalysisController(SentimentAnalysisService service) {
+    this.service = service;
+  }
 
   @PostMapping
   public ResponseEntity<OutputSentimentDTO> createAnalysis(@RequestBody InputSentimentDTO inputSentimentDTO) {
