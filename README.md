@@ -1,45 +1,57 @@
-# h12-sentiment-api
+# h12-sentiment-api: API de Análise de Sentimento em Microserviços
 
-RESUMO DO KICK-OFF: PROJETO SENTIMENT-API Data: 09/12/2025 | Facilitador: Cidirclay Queiroz
+## 🚀 Status do Projeto (MVP Integrado)
 
-Olá, time! Ótima reunião hoje. Definimos o escopo, dividimos os times e traçamos a arquitetura do nosso MVP.
+Este projeto implementa uma API robusta para classificar o sentimento de textos (reviews, comentários) em tempo real. O MVP já possui a arquitetura de **Microserviços** totalmente definida e mesclada na `main`.
 
-Para quem não pôde participar (e para registro oficial), seguem as definições:
+**Time:** 
+Cidirclay (Tech Lead), Ailson, Leandro, Ana Consuelo, Rayra, Moisés, Daniel.
 
-1. O TIME (Squads)
+## 🛠️ Tecnologias Principais
 
-🧠 Squad Data Science: Rayra, Moisés, Daniel.
+* **Gateway API:** Java Spring Boot (Controlador principal e validação).
+* **Microserviço DS:** Python (Flask/FastAPI) - Responsável por carregar e rodar o modelo de Machine Learning.
+* **DevOps/Infraestrutura:** Docker e Docker Compose (Para orquestração da API Java e do Microserviço Python).
 
-⚙️ Squad Backend (Java): Ailson, Leandro, Ana Consuelo.
+## 🔌 Contrato API (Comunicação Final)
 
-🏗️ Arquitetura & DevOps: Cidirclay.
+A comunicação é feita via `POST` no Gateway Java, que se comunica com o Microserviço Python.
 
-(Aguardando integração dos 3 membros restantes)
+### Endpoint Final
 
-2. O PROJETO: SentimentAPI
+`POST /api/sentiment`
 
-Objetivo: API que recebe um texto e classifica o sentimento (Positivo/Neutro/Negativo) com grau de probabilidade.
+### Entrada (Request Body)
 
-Arquitetura Definida: Microserviços.
+json
+{
+  "text": "O atendimento foi excelente!"
+} 
 
-Serviço A (Java Spring): Gateway principal. Recebe a requisição do usuário, valida e chama o Serviço de IA.
+### Saída (Response Body)
 
-Serviço B (Python/Flask ou FastAPI): Carrega o modelo treinado e faz a predição.
+O retorno é o Contrato Padrão, já implementado no Backend Java:
 
-Fluxo: Cliente -> Backend Java -> API Python (Modelo) -> Backend Java -> Cliente.
-
-3. O "CONTRATO" (Interface de Comunicação) Para que Backend e Data Science possam trabalhar em paralelo sem travar, definimos o formato JSON padrão desde já:
-
-Entrada (Request):
-
-JSON
-
-{ "text": "O atendimento foi excelente!" }
-Saída (Response):
-
-JSON
-
+json
 {
   "previsao": "Positivo",
-  "probabilidade": 0.95
+  "probabilidade": 0.95 
 }
+
+
+### ⚙️ Instruções de Execução (Com Docker)
+
+Para rodar a arquitetura completa (Java Gateway + Microserviço Python) com um único comando:
+
+Clone o Repositório: git clone https://github.com/CidQueiroz/h12-sentiment-api.git
+
+Navegue para o Diretório Raiz:
+ - cd h12-sentiment-api
+
+ - Inicie os Microserviços:docker-compose up --build
+
+ - A API Java estará disponível em http://localhost:8080/api/sentiment.
+
+### Próximos Passos: 
+
+Integração da Chamada HTTP (Java --> Python) e Treinamento do Modelo DS (SVM/LogReg).
