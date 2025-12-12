@@ -1,9 +1,7 @@
 package h12.sentiment.api.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,13 +23,12 @@ public class SentimentAnalysisController {
 
   @PostMapping
   public ResponseEntity<OutputSentimentDTO> createAnalysis(@RequestBody InputSentimentDTO inputSentimentDTO) {
-    var sentiment = service.createAnalysis(inputSentimentDTO);
-    return ResponseEntity.status(HttpStatus.OK).body(sentiment);
+    try {
+      var sentiment = service.createAnalysis(inputSentimentDTO);
+      return ResponseEntity.status(HttpStatus.OK).body(sentiment);
+    } catch (RuntimeException e) {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
   }
 
-  @GetMapping
-  public ResponseEntity<OutputSentimentDTO> getAnalyzed() {
-    var sentiment = service.getOneAnalysis();
-    return ResponseEntity.status(HttpStatus.OK).body(sentiment);
-  }
 }
