@@ -12,10 +12,12 @@ O sistema é capaz de identificar se um texto está em **Português** ou **Ingl�
  Rayra Bandeira de Mello Gomes Dias,
  Moisés Ribeiro dos Santos Junior,
  Daniel Farney Moura Moreira.
+
 * **⚙️ Squad Backend (Java):**
 Ailson Moreira,
 Leandro Fernandes Moraes, 
 Ana Fernandez Cruz.
+
 * **🏗️ Arquitetura & DevOps:**
 Cidirclay Santos de Lima Queiroz.
 
