@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -14,12 +12,12 @@ services:
       # Exemplo: Se o seu Spring Boot precisar saber o host do microservice Python
       # Adapte esta variável de ambiente conforme a configuração da sua aplicação Java
       PYTHON_MICROSERVICE_URL: http://microservice:8000
-      PROFILE: real
+      SPRING_PROFILES_ACTIVE: real
 
   microservice:
     build:
-      context: ./microservice
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: microservice/Dockerfile
     ports:
       - "8000:8000"
     # Opcional: Volumes para persistir dados ou carregar modelos, se necessário

@@ -18,7 +18,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.metrics import classification_report, accuracy_score
 
 # ============================================================
@@ -176,7 +176,8 @@ def treinar_modelo(X_train, X_test, y_train, y_test):
     X_train_tfidf = tfidf.fit_transform(X_train)
     X_test_tfidf = tfidf.transform(X_test)
 
-    modelo = LinearSVC(
+    modelo = SVC(
+        probability=True,
         class_weight="balanced",
         random_state=42,
     )
@@ -206,8 +207,12 @@ def salvar_modelo(modelo, tfidf, pasta: str = "models"):
 # Execução principal (main)
 # ============================================================
 if __name__ == "__main__":
+    # Constrói o caminho para o dataset relativo à localização do script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(script_dir, "amazon-fashion-800k+-user-reviews-dataset.csv")
+
     print("Carregando dataset...")
-    df = carregar_dados("./amazon-fashion-800k+-user-reviews-dataset.csv")
+    df = carregar_dados(csv_path)
 
     print("Análise inicial...")
     analise_inicial(df)

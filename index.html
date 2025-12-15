@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>H12 - Análise de Sentimento (Demo Final)</title>
+        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+        
+        <style>
+            :root {
+                --cor-acao-primaria: #FF8C00;
+                --cor-terciaria: #4ecdc4;
+                --cor-fundo-padrao: #1a1a2e;
+                --cor-container: rgba(22, 33, 62, 0.9);
+                --cor-texto-primario: #A0AEC0;
+                --cor-texto-secundario:#E2E8F0;
+                --cor-positivo: #28a745;
+                --cor-negativo: #dc3545;  /* Vermelho para Negativo */
+                --cor-neutro: #555555; /* Cinza para Neutro */
+                --fonte-primaria: 'Orbitron', sans-serif;
+                
+                /* Gradiente da Plataforma (NoCountry) */
+                --gradiente-plataforma: linear-gradient(90deg, #F90399, #9F4BBA, #5581D8, #2E9EE0, #07C1F5);
+                
+                --cor-positivo-clara: #3aa657;
+                --cor-negativo-clara: #e65c5c;
+                --cor-neutro-clara: #777777;
+
+            }
+
+            body.pagina-inicial {
+                background-image: var(--gradiente-plataforma);
+                background-size: 110% 110%;
+                background-repeat: no-repeat;
+                background-position: center center;
+
+                min-height: 100vh;
+                font-family: var(--fonte-primaria);
+                position: relative;
+                overflow: hidden;
+                color: var(--cor-texto-secundario);
+                transition: background-image 1s ease-in-out, background-color 1s ease-in-out; 
+            }
+            
+            .particles {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+            }
+            
+            #particles .particle  {
+                position: absolute;
+                font-family: 'Font Awesome 5 Free'; 
+                font-weight: 900;
+                content: "\f126"; /* Ícone de quebra-cabeça/peça */
+                font-size: 1.5rem;
+                color: rgba(5, 5, 5, 0.8); /* Cor do tema NoCountry */
+                animation: float 1s infinite linear;
+                top: -5vw;
+            }
+
+            @keyframes float {
+                0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+                10% { opacity: 1; }
+                95% { opacity: 1; }
+                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+            
+            }
+            
+            .context-title {
+                position: fixed;
+                top: 5%; /* Move um pouco para cima para dar espaço ao SENTIMENTO */
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 5vw; /* Um pouco menor que as laterais (6vw) */
+                font-weight: 900;
+                font-family: var(--fonte-primaria);
+                -webkit-text-stroke: 1px rgba(0, 0, 0, 0.7); 
+                -webkit-text-fill-color: #000000bb;
+                
+                opacity: 0; 
+                z-index: 40;
+                transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+            }
+
+            /* No carregamento, ele aparece */
+            body.loaded .context-title {
+                opacity: 1; 
+                transform: translateX(-50%) translateY(-50px); /* Move levemente para cima na entrada */
+            }
+
+            /* Quando o resultado (data-sentiment) aparece, ele DESAPARECE */
+            body[data-sentiment='positivo'] .context-title,
+            body[data-sentiment='negativo'] .context-title,
+            body[data-sentiment='neutro'] .context-title {
+                opacity: 0;
+            }
+
+            .container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                position: relative;
+                z-index: 10;
+                width: 100%;
+            }
+
+            .logo-container {
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 90vw;
+                max-width: 600px;
+                aspect-ratio: 1 / 1;
+            }
+
+            .animated-logo {
+                position: fixed;
+                top: 50%;
+                overflow: hidden;
+                font-family: var(--fonte-primaria);
+                font-size: 6vw;
+                font-weight: 900;
+                opacity: 0;
+                z-index: 10;
+                width: 40%;
+                text-align: center;
+                transition: all 2s cubic-bezier(0.23, 1, 0.32, 1);
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+                -webkit-text-fill-color: #000000bb;
+                background: none;
+                text-shadow: none;
+            }
+
+            .sentiment-part1 {
+                left: -5%;
+                transform: translateX(-300%) translateY(-50%);
+                -webkit-text-stroke: 1px rgba(255, 140, 0, 0.7);
+            }
+
+            .sentiment-part2 {
+                right: -5%;
+                transform: translateX(300%) translateY(-50%);
+                -webkit-text-stroke: 1px rgba(78, 205, 196, 0.7);
+            }
+
+            body.loaded .animated-logo {
+                opacity: 1;
+                transform: translateX(0) translateY(-50%);
+            }
+            
+            .sentiment-panel-core {
+                position: absolute;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                padding: 30px;
+                background: var(--cor-container);
+                border-radius: 20px;
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(8px);
+                max-width: 450px;
+                margin-top: 150px;
+                z-index: 50;
+                transform: translateY(-50px);
+                border: 2px solid var(--cor-terciaria);
+                box-shadow: 0 0 30px var(--cor-terciaria-clara), 0 0 5px var(--cor-borda);
+                transition: border-color 1s ease, box-shadow 1s ease;
+            }
+            
+            .modal-title {
+                color: var(--cor-terciaria);
+                margin-bottom: 5px;
+                font-size: 24px;
+                text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+            }
+
+            .form-input {
+                width: 100%;
+                min-height: 120px;
+                padding: 10px 10px;
+                border: 1px solid var(--cor-terciaria);
+                border-radius: 10px;
+                background: rgba(10, 26, 62, 0.7);
+                color: #fff;
+                font-size: 16px;
+                outline: none;
+                resize: none;
+                transition: all 0.3s ease;
+            }
+
+            .primary-sentiment-button {
+                background: linear-gradient(45deg, var(--cor-acao-primaria), var(--cor-terciaria));
+                border: none;
+                color: white;
+                font-size: 18px;
+                padding: 12px 25px;
+                border-radius: 25px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+            }
+
+            .primary-sentiment-button:disabled {
+                background: gray;
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+
+            .primary-sentiment-button:hover:not(:disabled) {
+                transform: scale(1.05);
+            }
+
+            #result-display {
+                margin-top: 15px;
+                font-family: var(--fonte-primaria);
+                color: var(--cor-texto-secundario);
+                font-weight: 100;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            #result-emoji {
+                font-size: 2rem;
+            }
+            
+            /*##########################################
+            --- LÓGICA DA MUDANÇA DE COR DE FUNDO ---
+            ###########################################*/
+            
+            /* POSITIVO */
+            body[data-sentiment='positivo'] {
+                background-image: none;
+                background-color: var(--cor-positivo);
+            }
+            body[data-sentiment='positivo'] .sentiment-part1, 
+            body[data-sentiment='positivo'] .sentiment-part2 {
+                text-shadow: 0 0 20px var(--cor-positivo-clara), 0 0 10px #FFFFFF; /* Borda Brilhante */
+                -webkit-text-stroke: 1px var(--cor-positivo-clara);
+            }
+            
+            body[data-sentiment='positivo'] .sentiment-panel-core {
+                border-color: var(--cor-positivo);
+                box-shadow: 0 0 30px var(--cor-positivo-clara), 0 0 5px var(--cor-positivo);
+            }
+
+            /* NEGATIVO */
+            body[data-sentiment='negativo'] {
+                background-image: none;
+                background-color: var(--cor-negativo);
+            }
+            body[data-sentiment='negativo'] .sentiment-part1, 
+            body[data-sentiment='negativo'] .sentiment-part2 {
+                text-shadow: 0 0 20px var(--cor-negativo-clara), 0 0 10px #FFFFFF;
+                -webkit-text-stroke: 1px var(--cor-negativo-clara);
+            }
+            body[data-sentiment='negativo'] .sentiment-panel-core {
+                border-color: var(--cor-negativo);
+                box-shadow: 0 0 30px var(--cor-negativo-clara), 0 0 5px var(--cor-negativo);
+            }
+
+            /* NEUTRO */
+            body[data-sentiment='neutro'] {
+                background-image: none;
+                background-color: var(--cor-neutro);
+            }
+            body[data-sentiment='neutro'] .sentiment-part1, 
+            body[data-sentiment='neutro'] .sentiment-part2 {
+                text-shadow: 0 0 20px var(--cor-neutro-clara), 0 0 10px #FFFFFF;
+                -webkit-text-stroke: 1px var(--cor-neutro-clara);
+            }
+            body[data-sentiment='neutro'] .sentiment-panel-core {
+                border-color: var(--cor-neutro-clara);
+                box-shadow: 0 0 30px var(--cor-neutro-clara), 0 0 5px var(--cor-neutro-clara);
+            }
+
+            body.pagina-inicial:not([data-sentiment]):not([data-sentiment='neutro']) {
+                background-image: var(--gradiente-plataforma);
+            }
+
+            #result-probability {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--cor-texto-secundario);
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+                transition: all 1s ease;
+            }
+
+            @media (max-width: 900px) {
+                /* (Sua lógica de animação de cima/baixo já está aqui) */
+                .logo-container .animated-logo {
+                    font-size: 12vw;
+                    /* ... */
+                }
+            }
+
+
+        </style>
+        </head>
+
+    <body class="pagina-inicial" data-sentiment="default">
+        
+        <div class="particles" id="particles"></div>
+        
+        <div class="container">
+
+            
+            <div class="logo-container">
+                
+                <h1 class="context-title" id="context-title">ANÁLISE DE</h1>
+                
+                <div class="animated-logo sentiment-part1" id="sentiment-part1">SENTI</div>
+                
+                <div class="animated-logo sentiment-part2" id="sentiment-part2">MENTO</div>
+                
+                <div class="sentiment-panel-core" id="sentiment-panel">
+                    
+                    <h2 id="panel-title" class="modal-title">Insira o Comentário para Análise</h2>
+                    
+                    <textarea id="text-input" class="form-input" placeholder="Digite o review aqui..." rows="5"></textarea>
+                    
+                    <button id="analyze-button" class="primary-sentiment-button" disabled>
+                        <i class="fas fa-magic"></i> ANALISAR
+                    </button>
+                    
+                    <div id="result-display">
+                        <span id="result-emoji"></span> 
+                        <span id="result-probability"></span>
+                    </div>
+
+                </div>
+                
+            </div>
+        
+        </div>
+
+        <script>
+            // =======================================================
+            // CONFIGURAÇÕES E FLUXO PRINCIPAL
+            // =======================================================
+            // ATENÇÃO: A porta 8080 é a porta do Spring Boot (BE) rodando localmente ou no Docker.
+            const ANALYZE_URL = 'http://localhost:8080/sentiment'; 
+            
+            const bodyElement = document.body;
+            const textInput = document.getElementById('text-input');
+            const analyzeButton = document.getElementById('analyze-button');
+            const resultEmoji = document.getElementById('result-emoji');
+            const resultProbability = document.getElementById('result-probability');
+            const sentimentPart1 = document.getElementById('sentiment-part1');
+            const sentimentPart2 = document.getElementById('sentiment-part2');
+
+            // Mapeamento de Cores, Emojis e Texto para a Animação
+            const sentimentMap = {
+                'Positivo': { sentiment: 'positivo', emoji: '🟢', part1: 'POSI', part2: 'TIVO' },
+                'Negativo': { sentiment: 'negativo', emoji: '🔴', part1: 'NEGA', part2: 'TIVO' },
+                // O DS pode retornar "Neutro" se o modelo não tiver certeza
+                'Neutro':   { sentiment: 'neutro', emoji: '🟡', part1: 'NEU', part2: 'TRO' },
+                'default':  { sentiment: 'default', emoji: '🧠', part1: 'SENTI', part2: 'MENTO' }
+            };
+
+            // 1. Habilita/Desabilita o botão
+            textInput.addEventListener('input', () => {
+                const isValid = textInput.value.trim().length > 5;
+                analyzeButton.disabled = !isValid;
+                
+                if (!isValid) {
+                    updateResult('default', 'Aguardando Texto...');
+                }
+            });
+
+            // 2. Função de Análise (POST para a API Java)
+            analyzeButton.addEventListener('click', async () => {
+                const text = textInput.value.trim();
+                if (text.length === 0) return;
+
+                analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ANALISANDO...';
+                analyzeButton.disabled = true;
+
+                try {
+                    const response = await fetch(ANALYZE_URL, {
+                        method: 'POST', // CRÍTICO: Deve ser POST para o Contrato!
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: text })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro de API: ${response.status} - Verifique o Java/Docker.`);
+                    }
+
+                    const result = await response.json();
+                    
+                    // Lendo o Contrato JSON: {"previsao": "STRING", "probabilidade": FLOAT}
+                    const previsao = result.previsao || 'Neutro'; 
+                    const probabilidade = (result.probabilidade * 100).toFixed(1);
+
+                    updateResult(previsao, `Confiança: ${probabilidade}%`);
+
+                } catch (error) {
+                    console.error('Erro na análise:', error);
+                    updateResult('default', 'ERRO: Verifique o console ou Docker.');
+                } finally {
+                    analyzeButton.innerHTML = '<i class="fas fa-magic"></i> ANALISAR';
+                    analyzeButton.disabled = false;
+                }
+            });
+
+            // 3. Função de Atualização Visual (Mágica da Cor e Texto)
+            function updateResult(sentimentString, probabilityText) {
+                // Normaliza a string (ex: 'Positivo' -> 'positivo')
+                const sentimentKey = sentimentString.charAt(0).toUpperCase() + sentimentString.slice(1).toLowerCase();
+                const data = sentimentMap[sentimentKey] || sentimentMap['default'];
+
+                bodyElement.classList.remove('loaded');
+                
+                void bodyElement.offsetWidth;
+
+                // A) Mudar o Fundo (Transição Suave via data-sentiment)
+                bodyElement.setAttribute('data-sentiment', data.sentiment);
+                
+                // B) Mudar os Logos Laterais (Animação de Sentimento)
+                sentimentPart1.textContent = data.part1;
+                sentimentPart2.textContent = data.part2;
+
+                bodyElement.classList.add('loaded');
+
+                // C) Mudar o Display Central
+                resultEmoji.textContent = data.emoji;
+                resultProbability.textContent = probabilityText;
+            }
+
+            // --- LÓGICA DE CARREGAMENTO E ANIMAÇÃO ---
+            document.addEventListener('DOMContentLoaded', () => {
+                // Animação de entrada (body.loaded)
+                setTimeout(() => { document.body.classList.add('loaded'); }, 500);
+
+                // Partículas de fundo (Adaptado do seu código)
+                const particles = document.getElementById('particles');
+                for (let i = 0; i < 60; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle fas fa-puzzle-piece';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                    particles.appendChild(particle);
+                }
+
+                // Estado inicial
+                updateResult('default', 'Aguardando Texto...');
+            });
+        
+        </script>
+        
+    </body>
+</html>
