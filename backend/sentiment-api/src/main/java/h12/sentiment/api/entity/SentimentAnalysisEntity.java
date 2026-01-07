@@ -33,6 +33,9 @@ public class SentimentAnalysisEntity {
     @Column(nullable = false)
     private Double probability;
 
+    @Column
+    private String language;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

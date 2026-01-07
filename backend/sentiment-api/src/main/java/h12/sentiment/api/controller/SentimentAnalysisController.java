@@ -14,6 +14,12 @@ import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
 import h12.sentiment.api.service.SentimentAnalysisService;
 
+import h12.sentiment.api.entity.SentimentAnalysisEntity;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+
 @RestController
 @RequestMapping("/sentiment")
 @CrossOrigin(origins = "*")
@@ -30,6 +36,11 @@ public class SentimentAnalysisController {
       return service.createAnalysis(inputSentimentDTO)
               .map(sentiment -> ResponseEntity.status(HttpStatus.OK).body(sentiment))
               .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()));
+  }
+
+  @GetMapping("/history")
+  public Mono<List<SentimentAnalysisEntity>> getAllAnalyses() {
+      return service.getAllAnalyses();
   }
 
 }

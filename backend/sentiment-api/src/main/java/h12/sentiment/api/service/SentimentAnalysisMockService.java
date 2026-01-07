@@ -41,4 +41,9 @@ public class SentimentAnalysisMockService implements SentimentAnalysisService{
     public Mono<OutputSentimentDTO> getOneAnalysis() {
         return Mono.just(new OutputSentimentDTO("Positive", 0.95));
     }
+
+    @Override
+    public Mono<java.util.List<h12.sentiment.api.entity.SentimentAnalysisEntity>> getAllAnalyses() {
+        return Mono.just(java.util.Collections.emptyList());
+    }
 }
