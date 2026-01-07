@@ -76,16 +76,19 @@ Graças ao build automatizado que implementamos, você só precisa do Docker par
 Na pasta raiz do projeto, execute:
 ```shell
 docker compose up --build
+```
+
 A flag --build garante que todas as alterações recentes no código Java e Python sejam compiladas.
 
 2. Acessar a Aplicação
 Interface Web: Abra o arquivo frontend/index.html diretamente no navegador.
-
+```shell
 API Java: http://localhost:8080/sentiment
 
 IA Microservice: http://localhost:8000/docs (Documentação Swagger)
+```
 
-🧩 Guia de Expansão (Novos Idiomas)
+## 🧩 Guia de Expansão (Novos Idiomas)
 Para adicionar um novo idioma (ex: Francês - fr):
 
 Treine o modelo e o vetorizador e salve em microservice/models/ como:
@@ -96,7 +99,7 @@ Adicione 'fr' à lista supported_languages no arquivo microservice/app.py.
 
 Reinicie o container com docker compose up --build.
 
-🧠 Model Training (Data Science)
+## 🧠 Model Training (Data Science)
 O retreino pode ser feito via script para garantir consistência:
 
 Shell
