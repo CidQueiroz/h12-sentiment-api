@@ -16,7 +16,7 @@ public class SentimentAnalysis {
   private double probabilidade;
 
   public SentimentAnalysis(InputSentimentDTO inputSentimentDTO) {
-    this.text = inputSentimentDTO.text();
+    this.text = inputSentimentDTO.getText();
   }
 
   public void setText(String text) {

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 
 import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
@@ -15,7 +16,7 @@ import h12.sentiment.api.service.SentimentAnalysisService;
 
 @RestController
 @RequestMapping("/sentiment")
-@CrossOrigin(origins = "*") // Permite requisições de qualquer origem
+@CrossOrigin(origins = "*")
 public class SentimentAnalysisController {
 
   private SentimentAnalysisService service;
@@ -25,13 +26,10 @@ public class SentimentAnalysisController {
   }
 
   @PostMapping
-  public ResponseEntity<OutputSentimentDTO> createAnalysis(@Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
-    try {
-      var sentiment = service.createAnalysis(inputSentimentDTO);
-      return ResponseEntity.status(HttpStatus.OK).body(sentiment);
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-    }
+  public Mono<ResponseEntity<OutputSentimentDTO>> createAnalysis(@Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
+      return service.createAnalysis(inputSentimentDTO)
+              .map(sentiment -> ResponseEntity.status(HttpStatus.OK).body(sentiment))
+              .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()));
   }
 
 }

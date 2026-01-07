@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY microservice/. .
 
 # Cria o diretório para os modelos e copia os modelos treinados
-
+COPY microservice/models/ ./models/
 
 # Expõe a porta que o FastAPI usa (padrão para uvicorn é 8000)
 EXPOSE 8000

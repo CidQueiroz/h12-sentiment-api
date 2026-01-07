@@ -330,6 +330,16 @@
                     
                     <h2 id="panel-title" class="modal-title">Insira o Comentário para Análise</h2>
                     
+                    <div class="model-selector-container" style="margin-bottom: 15px; text-align: left;">
+                        <label style="color: var(--cor-texto-primario); font-size: 0.8rem; text-transform: uppercase; font-weight: bold;">
+                            Motor de IA:
+                        </label>
+                        <select id="modelSelect" style="background: var(--cor-fundo-padrao); color: white; border: 1px solid var(--cor-acao-primaria); border-radius: 5px; padding: 5px; font-family: 'Orbitron'; cursor: pointer;">
+                            <option value="svm">SVM (Alta Precisão)</option>
+                            <option value="nb" selected>Naive Bayes (Rápido)</option>
+                        </select>
+                    </div>
+
                     <textarea id="text-input" class="form-input" placeholder="Digite o review aqui..." rows="5"></textarea>
                     
                     <button id="analyze-button" class="primary-sentiment-button" disabled>
@@ -364,10 +374,9 @@
 
             // Mapeamento de Cores, Emojis e Texto para a Animação
             const sentimentMap = {
-                'Positivo': { sentiment: 'positivo', emoji: '🟢', part1: 'POSI', part2: 'TIVO' },
-                'Negativo': { sentiment: 'negativo', emoji: '🔴', part1: 'NEGA', part2: 'TIVO' },
-                // O DS pode retornar "Neutro" se o modelo não tiver certeza
-                'Neutro':   { sentiment: 'neutro', emoji: '🟡', part1: 'NEU', part2: 'TRO' },
+                'Positive': { sentiment: 'positivo', emoji: '🟢', part1: 'POSI', part2: 'TIVO' },
+                'Negative': { sentiment: 'negativo', emoji: '🔴', part1: 'NEGA', part2: 'TIVO' },
+                'Neutral':   { sentiment: 'neutro', emoji: '🟡', part1: 'NEU', part2: 'TRO' },
                 'default':  { sentiment: 'default', emoji: '🧠', part1: 'SENTI', part2: 'MENTO' }
             };
 
@@ -384,6 +393,8 @@
             // 2. Função de Análise (POST para a API Java)
             analyzeButton.addEventListener('click', async () => {
                 const text = textInput.value.trim();
+                const selectedModel = document.getElementById('modelSelect').value;
+
                 if (text.length === 0) return;
 
                 analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ANALISANDO...';
@@ -395,7 +406,8 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ text: text })
+                        body: JSON.stringify({text: text,
+                            model_type: selectedModel })
                     });
                     
                     if (!response.ok) {
@@ -421,9 +433,12 @@
 
             // 3. Função de Atualização Visual (Mágica da Cor e Texto)
             function updateResult(sentimentString, probabilityText) {
+                console.log("updateResult called with:", sentimentString, probabilityText);
                 // Normaliza a string (ex: 'Positivo' -> 'positivo')
                 const sentimentKey = sentimentString.charAt(0).toUpperCase() + sentimentString.slice(1).toLowerCase();
                 const data = sentimentMap[sentimentKey] || sentimentMap['default'];
+                console.log("sentimentKey:", sentimentKey);
+                console.log("data:", data);
 
                 bodyElement.classList.remove('loaded');
                 
