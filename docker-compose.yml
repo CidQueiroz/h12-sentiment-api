@@ -8,15 +8,16 @@ services:
     depends_on:
       microservice:
         condition: service_started
-      db:
-        condition: service_healthy
     environment:
       MICROSERVICE_URL: http://microservice:8000
-      SPRING_PROFILES_ACTIVE: dev
-      DB_URL: jdbc:mysql://db:3306/sentiment_db
-      DB_USERNAME: root
-      DB_PASSWORD: password
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_URL: jdbc:oracle:thin:@sentimenth12_high?TNS_ADMIN=/app/wallet
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TNS_ADMIN: /app/wallet
       TZ: America/Sao_Paulo
+    volumes:
+      - ./backend/sentiment-api/wallet:/app/wallet
     networks:
       - sentiment-network
 
@@ -27,33 +28,12 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"] # Check if FastAPI docs are up
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - sentiment-network
-
-  db:
-    image: mysql:8.0
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: sentiment_db
-      TZ: America/Sao_Paulo
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - sentiment-network
-
-volumes:
-  db_data:
 
 networks:
   sentiment-network:

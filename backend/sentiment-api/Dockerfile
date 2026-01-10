@@ -14,8 +14,15 @@ FROM eclipse-temurin:17-jre-focal
 
 WORKDIR /app
 
-# Copia o JAR do estágio de build (o nome exato é encontrado automaticamente)
+# Copia o JAR do estágio de build
 COPY --from=builder /workspace/target/*.jar app.jar
+
+# Copia a Wallet para dentro do container (assumindo que a pasta wallet está no contexto de build)
+# Nota: Para o docker-compose, o volume mapeado sobrescreverá isso se existir.
+COPY wallet /app/wallet
+
+# Configura a variável de ambiente para o Oracle
+ENV TNS_ADMIN=/app/wallet
 
 EXPOSE 8080
 

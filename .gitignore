@@ -29,3 +29,19 @@ gemini.md
 # csv files
 *.csv
 data-science/train_logistic_temp.py
+
+# Security and Secrets
+.env
+wallet/
+backend/sentiment-api/wallet/
+**/*.p12
+**/*.sso
+**/*.jks
+
+# IDE and Build
+.idea/
+target/
+*.iml
+.vscode/
+__pycache__/
+*.pyc

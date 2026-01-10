@@ -21,7 +21,8 @@ public class SentimentAnalysisEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Lob
+    @Column(nullable = false)
     private String originalText;
 
     @Column(nullable = false)
