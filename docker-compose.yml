@@ -5,14 +5,21 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    # Certifique-se de que a aplicação Spring Boot depende do microserviço Python estar pronto
     depends_on:
-      - microservice
+      microservice:
+        condition: service_started
     environment:
-      # Exemplo: Se o seu Spring Boot precisar saber o host do microservice Python
-      # Adapte esta variável de ambiente conforme a configuração da sua aplicação Java
-      PYTHON_MICROSERVICE_URL: http://microservice:8000
-      SPRING_PROFILES_ACTIVE: real
+      MICROSERVICE_URL: http://microservice:8000
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_URL: jdbc:oracle:thin:@sentimenth12_high?TNS_ADMIN=/app/wallet
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TNS_ADMIN: /app/wallet
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./backend/sentiment-api/wallet:/app/wallet
+    networks:
+      - sentiment-network
 
   microservice:
     build:
@@ -20,7 +27,14 @@ services:
       dockerfile: microservice/Dockerfile
     ports:
       - "8000:8000"
-    # Opcional: Volumes para persistir dados ou carregar modelos, se necessário
-    # volumes:
-    #   - ./data-science/models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentiment-network
+
+networks:
+  sentiment-network:
 

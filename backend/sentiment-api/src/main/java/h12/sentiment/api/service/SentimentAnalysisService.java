@@ -1,12 +1,13 @@
 package h12.sentiment.api.service;
 
-import org.springframework.stereotype.Service;
-
 import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
+import h12.sentiment.api.entity.SentimentAnalysisEntity;
+import reactor.core.publisher.Mono;
+import java.util.List;
 
-@Service
 public interface SentimentAnalysisService {
-    OutputSentimentDTO createAnalysis(InputSentimentDTO input);
-    OutputSentimentDTO getOneAnalysis();
+    Mono<OutputSentimentDTO> createAnalysis(InputSentimentDTO input);
+    Mono<OutputSentimentDTO> getOneAnalysis();
+    Mono<List<SentimentAnalysisEntity>> getAllAnalyses();
 }

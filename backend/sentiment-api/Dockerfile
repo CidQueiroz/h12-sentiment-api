@@ -1,16 +1,29 @@
+# Estágio de Build
+FROM eclipse-temurin:17-jdk-focal AS builder
+
+WORKDIR /workspace
+
+# Copia os arquivos do Maven
+COPY . .
+
+# Executa o build do Maven para gerar o JAR, tratando permissões no mvnw
+RUN chmod +x ./mvnw && ./mvnw package -DskipTests
+
+# Estágio de Produção
 FROM eclipse-temurin:17-jre-focal
 
-# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copia o JAR da sua aplicação Spring Boot para o diretório de trabalho
-# Assumimos que o JAR será construído no caminho alvo (target)
-# e que o nome do arquivo JAR é 'app.jar'.
-# Você precisará ajustar 'app.jar' para o nome real do seu JAR, se for diferente.
-COPY target/app.jar app.jar
+# Copia o JAR do estágio de build
+COPY --from=builder /workspace/target/*.jar app.jar
 
-# Expõe a porta que o Spring Boot usa (padrão é 8080)
+# Copia a Wallet para dentro do container (assumindo que a pasta wallet está no contexto de build)
+# Nota: Para o docker-compose, o volume mapeado sobrescreverá isso se existir.
+COPY wallet /app/wallet
+
+# Configura a variável de ambiente para o Oracle
+ENV TNS_ADMIN=/app/wallet
+
 EXPOSE 8080
 
-# Comando para rodar a aplicação
 ENTRYPOINT ["java", "-jar", "app.jar"]

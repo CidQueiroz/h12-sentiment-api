@@ -1,37 +1,57 @@
 package h12.sentiment.api.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import jakarta.validation.Valid;
-
 import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
+import h12.sentiment.api.dto.SentimentDetailedDTO;
 import h12.sentiment.api.service.SentimentAnalysisService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+/**
+ * Controller reativo para análise de sentimento.
+ */
 @RestController
 @RequestMapping("/sentiment")
-@CrossOrigin(origins = "*") // Permite requisições de qualquer origem
+@CrossOrigin(origins = "*")
 public class SentimentAnalysisController {
 
-  private SentimentAnalysisService service;
+  private final SentimentAnalysisService service;
 
   public SentimentAnalysisController(SentimentAnalysisService service) {
     this.service = service;
   }
 
+  /**
+   * POST /sentiment
+   * Cria uma nova análise de sentimento.
+   */
   @PostMapping
-  public ResponseEntity<OutputSentimentDTO> createAnalysis(@Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
-    try {
-      var sentiment = service.createAnalysis(inputSentimentDTO);
-      return ResponseEntity.status(HttpStatus.OK).body(sentiment);
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-    }
+  public Mono<ResponseEntity<OutputSentimentDTO>> createAnalysis(
+      @Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
+
+    return service.createAnalysis(inputSentimentDTO)
+        .map(ResponseEntity::ok)
+        .onErrorResume(e -> Mono.just(
+            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new OutputSentimentDTO("serviço_indisponivel", 0.0))));
   }
 
+  /**
+   * GET /sentiment/history
+   * Retorna o histórico de análises em streaming (Flux).
+   */
+  @GetMapping("/history")
+  public Flux<SentimentDetailedDTO> getAllAnalyses() {
+
+    return service.getAllAnalyses()
+        .map(SentimentDetailedDTO::new)
+        .onErrorResume(e -> {
+          // log opcional
+          return Flux.empty();
+        });
+  }
 }

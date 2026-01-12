@@ -1,123 +1,111 @@
-# h12-sentiment-api: API de Análise de Sentimento Multilíngue
+<div align="center">
 
-## 🚀 Status do Projeto (Funcional e Pronto para Demo)
+# 🧠 h12-sentiment-api
+### Sistema Multilíngue de Análise de Sentimento com Arquitetura de Microserviços
 
-Este projeto implementa uma API robusta para classificar o sentimento de textos em tempo real. A arquitetura de **Microserviços** está totalmente funcional, com suporte a múltiplos idiomas e detecção automática.
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Java](https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.1.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-O sistema é capaz de identificar se um texto está em **Português** ou **Inglês**, aplicar o modelo de Machine Learning correspondente e retornar a análise de sentimento. A arquitetura já está preparada para receber novos idiomas (como o Espanhol) de forma flexível.
+[🔗 Repositório Oficial no GitHub](https://github.com/cidirclay/h12-sentiment-api)
+
+</div>
 
 ---
-## **O TIME (Squads):** 
-* **🧠 Squad Data Science:**
- Rayra Bandeira de Mello Gomes Dias,
- Moisés Ribeiro dos Santos Junior,
- Daniel Farney Moura Moreira.
 
-* **⚙️ Squad Backend (Java):**
-Ailson Moreira,
-Leandro Fernandes Moraes, 
-Ana Fernandez Cruz.
+## 🚀 Status do Projeto: Funcional e Pronto para Demo
+Este projeto implementa uma solução robusta e escalável para classificação de sentimentos em feedbacks de clientes. A arquitetura de microserviços está totalmente operacional, suportando **detecção automática de idioma** e múltiplos algoritmos de Machine Learning.
 
-* **🏗️ Arquitetura & DevOps:**
-Cidirclay Santos de Lima Queiroz.
+O sistema processa entradas em **Português, Inglês e Espanhol**, aplicando o modelo mais acurado para cada caso e retornando uma análise tripartida (Positivo, Negativo ou Neutro).
+
+---
+
+## 🏛️ Arquitetura e Fluxo de Dados
+
+A solução foi construída separando a lógica de negócio da lógica de inferência de dados:
+
+1.  **Frontend:** Interface em HTML5/JS que permite a interação do usuário e a escolha dinâmica entre modelos (Naive Bayes vs SVM).
+2.  **API Gateway (Java Spring Boot):** * Gerencia o tráfego e as políticas de CORS.
+    * Valida os DTOs de entrada.
+    * Implementa resiliência: se o serviço de IA estiver offline, o Java retorna um erro `503 Service Unavailable` tratado.
+3.  **IA Microservice (Python FastAPI):**
+    * **Detecção de Idioma:** Usa processamento em tempo real para identificar a língua do texto.
+    * **Pre-processing:** Aplica limpeza via Regex (remoção de URLs, caracteres especiais).
+    * **Inferência:** Carrega dinamicamente os arquivos `.pkl` solicitados para realizar a predição.
+
+
+
+---
+
+## 👥 O TIME (Squads)
+
+### 🧠 Squad Data Science (NLP & Modelos)
+* **Rayra Bandeira de Mello Gomes Dias** - Pesquisa e Limpeza de Dados.
+* **Moisés Ribeiro dos Santos Junior** - Treinamento de Modelos e Avaliação.
+* **Daniel Farney Moura Moreira** - Notebooks e Otimização.
+* **Lidia Lapertosa** - Validação de modelos e suporte a dados em Espanhol.
+
+### ⚙️ Squad Backend (Desenvolvimento Java)
+* **Ailson Moreira** - Implementação de Services e Controllers.
+* **Leandro Fernandes Moraes** - WebClient e Integração Reativa.
+* **Ana Fernandez Cruz** - Validações e DTOs.
+
+### 🏗️ Liderança Técnica & DevOps
+* **Cidirclay Santos de Lima Queiroz** - Arquitetura de Containers, Dockerização e Integração entre Squads.
 
 ---
 
 ## ✨ Features Principais
 
-*   **Arquitetura de Microserviços:** Gateway de API em **Java/Spring Boot** se comunicando com um serviço de inferência em **Python/FastAPI**.
-*   **Análise de Sentimento com SVM:** Utiliza modelos `Support Vector Machine (SVC)` treinados para cada idioma, garantindo alta acurácia.
-*   **Suporte Multilíngue com Detecção Automática:** Envie um texto em Português ou Inglês e a API detecta o idioma e aplica o modelo correto automaticamente.
-*   **API RESTful:** Contrato de comunicação claro e simples via JSON.
-*   **Ambiente Conteinerizado:** Orquestração completa com **Docker** e **Docker Compose**, garantindo um ambiente de desenvolvimento e produção consistente.
-*   **Front-End Interativo:** Uma página `index.html` para demonstração visual da API, com a interface mudando de cor de acordo com o resultado do sentimento.
+* **⚡ Arquitetura Desacoplada:** Componentes independentes facilitam o deploy e manutenção.
+* **🌐 Suporte Multilíngue Real:** Detecção automática sem necessidade de intervenção do usuário.
+* **⚖️ Comparação de Modelos:** Interface permite testar o mesmo texto com **Naive Bayes (Acurácia: 84.4%)** ou **SVM**.
+* **🛡️ Blindagem Contra Erros:** Tratamento de erros no Backend Java para evitar quedas em cascata.
+* **🏗️ Docker Multi-Stage:** Compilação nativa do Java dentro do container, eliminando necessidade de ferramentas instaladas localmente.
 
 ---
 
-## 🛠️ Tecnologias Principais
+## ⚙️ Instruções de Execução (Guia Rápido)
 
-*   **Gateway API:** Java 17, Spring Boot 4
-*   **Microserviço DS:** Python 3.9, FastAPI, scikit-learn, joblib, langdetect
-*   **DevOps/Infraestrutura:** Docker, Docker Compose, Maven
+Graças ao build automatizado que implementamos, você só precisa do Docker para rodar o projeto inteiro.
 
----
-## 🔌 API - Contrato e Uso
-
-A comunicação é feita via `POST` no Gateway Java, que se comunica com o Microserviço Python.
-
-### Endpoint
-
-`POST /sentiment`
-
-### Entrada (Request Body)
-
-O contrato foi mantido simples. Não é necessário enviar o idioma, pois ele é detectado automaticamente.
-
-```json
-{
-  "text": "O atendimento foi excelente e o produto chegou rápido!"
-}
-```
-
-### Saída (Response Body)
-
-```json
-{
-  "previsao": "Positivo",
-  "probabilidade": 0.98
-}
-```
-
-### Exemplo de Teste com cURL
-
+### 1. Iniciar o Ambiente
+Na pasta raiz do projeto, execute:
 ```shell
-curl -X POST http://localhost:8080/sentiment \
--H "Content-Type: application/json" \
--d '{"text": "This is a wonderful product!"}'
+docker compose up --build
 ```
 
----
-## ⚙️ Instruções de Execução Local
+A flag --build garante que todas as alterações recentes no código Java e Python sejam compiladas.
 
-**Pré-requisitos:** Docker e Java 17+ (para o build do Maven) instalados.
-
-O processo de build é feito em **duas etapas obrigatórias** para garantir que as alterações no código Java sejam refletidas no contêiner Docker.
-
-### Passo 1: Construir o Projeto Java (Back-end)
-
-Antes de iniciar o Docker, é necessário compilar o projeto Spring Boot para gerar o arquivo `.jar` atualizado. Execute o comando a partir da pasta **raiz** do projeto:
-
+2. Acessar a Aplicação
+Interface Web: Abra o arquivo frontend/index.html diretamente no navegador.
 ```shell
-wsl ./mvnw -f backend/sentiment-api/pom.xml package -DskipTests
+API Java: http://localhost:8080/sentiment
+
+IA Microservice: http://localhost:8000/docs (Documentação Swagger)
 ```
-*(Este comando pode ser executado apenas uma vez, e repetido somente se houver alterações no código Java).*
 
-### Passo 2: Iniciar os Contêineres com Docker Compose
+## 🧩 Guia de Expansão (Novos Idiomas)
+Para adicionar um novo idioma (ex: Francês - fr):
 
-Com o `.jar` atualizado, você pode iniciar todo o ambiente com um único comando, também a partir da **raiz** do projeto.
+Treine o modelo e o vetorizador e salve em microservice/models/ como:
 
-```shell
-wsl docker compose up --build
-```
-*   A flag `--build` é importante para reconstruir as imagens com as últimas alterações (código Python, dependências, e o novo `.jar` do Java).
+nb_model_fr.pkl e tfidf_fr.pkl
 
-A API Java estará disponível em `http://localhost:8080/sentiment` e o microsserviço Python em `http://localhost:8000`.
+Adicione 'fr' à lista supported_languages no arquivo microservice/app.py.
 
-### Testando com o Front-End
+Reinicie o container com docker compose up --build.
 
-Após os contêineres estarem no ar, simplesmente **abra o arquivo `index.html`** no seu navegador para usar a interface de demonstração.
+## 🧠 Model Training (Data Science)
+O retreino pode ser feito via script para garantir consistência:
 
----
+Shell
 
-## 🗣️ Adicionando Novos Idiomas
+# Exemplo: Treinar Naive Bayes para Espanhol
+python3 data-science/train_models.py --language es --model_type nb
+Métrica de Sucesso: O modelo Naive Bayes (MultinomialNB) foi validado com 84.38% de acurácia no dataset de feedbacks, sendo o padrão atual de produção para espanhol.
 
-A arquitetura foi projetada para ser extensível. Para adicionar um novo idioma (ex: Espanhol):
-
-1.  Treine seu modelo e o vetorizador TF-IDF.
-2.  Salve os arquivos na pasta `microservice/models/` com o sufixo do idioma no padrão ISO 639-1 (ex: `_es`).
-    *   `svm_sentiment_model_es.pkl`
-    *   `tfidf_es.pkl`
-3.  Adicione o código do idioma (ex: `'es'`) à lista `supported_languages` no topo do arquivo `microservice/app.py`.
-4.  Reconstrua a imagem Docker com `wsl docker compose up --build`.
-
-A API irá carregar o novo modelo automaticamente e passará a detectá-lo.
+<div align="center"> Desenvolvido como projeto integrador para NoCountry 2024. </div>

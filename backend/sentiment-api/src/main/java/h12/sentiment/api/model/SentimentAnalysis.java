@@ -14,9 +14,10 @@ public class SentimentAnalysis {
   private String text;
   private String previsao;
   private double probabilidade;
+  private String idioma;
 
   public SentimentAnalysis(InputSentimentDTO inputSentimentDTO) {
-    this.text = inputSentimentDTO.text();
+    this.text = inputSentimentDTO.getText();
   }
 
   public void setText(String text) {
@@ -29,5 +30,13 @@ public class SentimentAnalysis {
 
   public void setProbabilidade(double probabilidade) {
     this.probabilidade = probabilidade;
+  }
+
+  public String getIdioma() {
+    return idioma;
+  }
+
+  public void setIdioma(String idioma) {
+    this.idioma = idioma;
   }
 }

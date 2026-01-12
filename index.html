@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>H12 - Análise de Sentimento (Demo Final)</title>
+        <title>H12 - Análise de Sentimento</title>
         
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -32,24 +32,35 @@
 
             body.pagina-inicial {
                 background-image: var(--gradiente-plataforma);
-                background-size: 110% 110%;
+                background-size: 110% 200%;
                 background-repeat: no-repeat;
                 background-position: center center;
-
                 min-height: 100vh;
                 font-family: var(--fonte-primaria);
                 position: relative;
-                overflow: hidden;
+                overflow-y: auto;
+                overflow-x: hidden;
                 color: var(--cor-texto-secundario);
-                transition: background-image 1s ease-in-out, background-color 1s ease-in-out; 
+                transition: background-image 2s ease-in-out, background-color 2s ease-in-out; 
             }
             
+            /* Nova Hero Section para agrupar tudo */
+            .hero-section {
+                position: relative;
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+            }
+
             .particles {
-                position: absolute;
+                position: fixed; /* Mantém fixo no fundo */
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
+                z-index: 1;
                 pointer-events: none;
             }
             
@@ -57,9 +68,9 @@
                 position: absolute;
                 font-family: 'Font Awesome 5 Free'; 
                 font-weight: 900;
-                content: "\f126"; /* Ícone de quebra-cabeça/peça */
+                content: "\f126";
                 font-size: 1.5rem;
-                color: rgba(5, 5, 5, 0.8); /* Cor do tema NoCountry */
+                color: rgba(5, 5, 5, 0.8);
                 animation: float 1s infinite linear;
                 top: -5vw;
             }
@@ -68,16 +79,16 @@
                 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
                 10% { opacity: 1; }
                 95% { opacity: 1; }
-                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+                100% { transform: translateY(250vh) rotate(360deg); opacity: 0; } /* Cai até o fundo da página estendida */
             
             }
             
             .context-title {
-                position: fixed;
-                top: 5%; /* Move um pouco para cima para dar espaço ao SENTIMENTO */
+                position: absolute;
+                top: -5%; 
                 left: 50%;
                 transform: translateX(-50%);
-                font-size: 5vw; /* Um pouco menor que as laterais (6vw) */
+                font-size: 5vw;
                 font-weight: 900;
                 font-family: var(--fonte-primaria);
                 -webkit-text-stroke: 1px rgba(0, 0, 0, 0.7); 
@@ -91,7 +102,7 @@
             /* No carregamento, ele aparece */
             body.loaded .context-title {
                 opacity: 1; 
-                transform: translateX(-50%) translateY(-50px); /* Move levemente para cima na entrada */
+                transform: translateX(-50%) translateY(0); /* Ajuste para absolute */
             }
 
             /* Quando o resultado (data-sentiment) aparece, ele DESAPARECE */
@@ -102,10 +113,8 @@
             }
 
             .container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
+                display: block; /* Remove o flex height 100vh daqui, pois será controlado pela hero-section e table */
+                min-height: auto;
                 position: relative;
                 z-index: 10;
                 width: 100%;
@@ -122,7 +131,7 @@
             }
 
             .animated-logo {
-                position: fixed;
+                position: absolute; /* Mudado de fixed para absolute */
                 top: 50%;
                 overflow: hidden;
                 font-family: var(--fonte-primaria);
@@ -160,7 +169,8 @@
             }
             
             .sentiment-panel-core {
-                position: absolute;
+                position: relative;
+                margin-top: 80px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -171,9 +181,8 @@
                 box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
                 backdrop-filter: blur(8px);
                 max-width: 450px;
-                margin-top: 150px;
                 z-index: 50;
-                transform: translateY(-50px);
+                transform: none; /* Reset transform */
                 border: 2px solid var(--cor-terciaria);
                 box-shadow: 0 0 30px var(--cor-terciaria-clara), 0 0 5px var(--cor-borda);
                 transition: border-color 1s ease, box-shadow 1s ease;
@@ -307,6 +316,81 @@
                 }
             }
 
+            .history-container {
+                width: 90%;
+                max-width: 1000px;
+                margin: 100px auto 50px auto;
+                padding: 30px;
+                background: var(--cor-container);
+                border-radius: 15px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                backdrop-filter: blur(10px);
+                z-index: 10;
+                position: relative;
+                border: 1px solid var(--cor-terciaria);
+            }
+            
+            .history-title {
+                text-align: center;
+                color: var(--cor-terciaria);
+                margin-bottom: 25px;
+                font-size: 2rem;
+                text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+            
+            .table-wrapper {
+                overflow-x: auto;
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                color: var(--cor-texto-secundario);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte mais legível para dados */
+            }
+            
+            th, td {
+                padding: 15px;
+                text-align: left;
+                border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+            }
+            
+            th {
+                background-color: rgba(78, 205, 196, 0.15);
+                color: var(--cor-terciaria);
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+            }
+            
+            td {
+                font-size: 0.95rem;
+            }
+            
+            tr:last-child td {
+                border-bottom: none;
+            }
+            
+            tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+                transition: background-color 0.3s ease;
+            }
+            
+            /* Badges para Previsão */
+            .badge {
+                padding: 5px 10px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .badge-pos { background-color: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid #28a745; }
+            .badge-neg { background-color: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545; }
+            .badge-neu { background-color: rgba(119, 119, 119, 0.2); color: #aaa; border: 1px solid #777; }
 
         </style>
         </head>
@@ -315,36 +399,69 @@
         
         <div class="particles" id="particles"></div>
         
-        <div class="container">
-
-            
-            <div class="logo-container">
-                
-                <h1 class="context-title" id="context-title">ANÁLISE DE</h1>
-                
-                <div class="animated-logo sentiment-part1" id="sentiment-part1">SENTI</div>
-                
-                <div class="animated-logo sentiment-part2" id="sentiment-part2">MENTO</div>
-                
-                <div class="sentiment-panel-core" id="sentiment-panel">
-                    
-                    <h2 id="panel-title" class="modal-title">Insira o Comentário para Análise</h2>
-                    
-                    <textarea id="text-input" class="form-input" placeholder="Digite o review aqui..." rows="5"></textarea>
-                    
-                    <button id="analyze-button" class="primary-sentiment-button" disabled>
-                        <i class="fas fa-magic"></i> ANALISAR
-                    </button>
-                    
-                    <div id="result-display">
-                        <span id="result-emoji"></span> 
-                        <span id="result-probability"></span>
-                    </div>
-
-                </div>
-                
-            </div>
+        <!-- HERO SECTION: Contém Título, Logos e Card -->
         
+        <div class="hero-section">
+    
+            <h1 class="context-title" id="context-title">ANÁLISE DE</h1>
+            
+            <div class="animated-logo sentiment-part1" id="sentiment-part1">SENTI</div>
+            
+            <div class="animated-logo sentiment-part2" id="sentiment-part2">MENTO</div>
+            
+            <div class="sentiment-panel-core" id="sentiment-panel">
+                
+                <h2 id="panel-title" class="modal-title">Insira o Comentário para Análise</h2>
+                
+                <div class="model-selector-container" style="margin: 5px; text-align: left;">
+                    
+                    <label style="color: var(--cor-texto-primario); font-size: 0.8rem; text-transform: uppercase; font-weight: bold;">
+                        Motor de IA:
+                    </label>
+
+                    <select id="modelSelect" style="background: var(--cor-fundo-padrao); color: white; border: 1px solid var(--cor-acao-primaria); border-radius: 5px; padding: 5px; font-family: 'Orbitron'; cursor: pointer;">
+                        <option value="nb" selected>Naive Bayes (Rápido)</option>
+                        <option value="svm">SVM (Alta Precisão)</option>
+                        <option value="lr">Logistic Regression (Média)</option>
+                    </select>
+                </div>
+
+                <textarea id="text-input" class="form-input" placeholder="Digite o review aqui..." rows="5"></textarea>
+                
+                <button id="analyze-button" class="primary-sentiment-button" disabled>
+                    <i class="fas fa-magic"></i> ANALISAR
+                </button>
+                
+                <div id="result-display">
+                    <span id="result-emoji"></span> 
+                    <span id="result-probability"></span>
+                </div>
+
+            </div>
+            
+        </div>
+
+        <!-- SESSÃO DE HISTÓRICO -->
+        <div class="history-container">
+            <h2 class="history-title"><i class="fas fa-history"></i> Histórico de Análises</h2>
+            <div class="table-wrapper">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Data/Hora</th>
+                            <th>Idioma</th>
+                            <th>Modelo</th>
+                            <th>Texto Original</th>
+                            <th>Previsão</th>
+                            <th>Confiança</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Linhas injetadas via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <script>
@@ -353,6 +470,7 @@
             // =======================================================
             // ATENÇÃO: A porta 8080 é a porta do Spring Boot (BE) rodando localmente ou no Docker.
             const ANALYZE_URL = 'http://localhost:8080/sentiment'; 
+            const HISTORY_URL = 'http://localhost:8080/sentiment/history';
             
             const bodyElement = document.body;
             const textInput = document.getElementById('text-input');
@@ -364,10 +482,9 @@
 
             // Mapeamento de Cores, Emojis e Texto para a Animação
             const sentimentMap = {
-                'Positivo': { sentiment: 'positivo', emoji: '🟢', part1: 'POSI', part2: 'TIVO' },
-                'Negativo': { sentiment: 'negativo', emoji: '🔴', part1: 'NEGA', part2: 'TIVO' },
-                // O DS pode retornar "Neutro" se o modelo não tiver certeza
-                'Neutro':   { sentiment: 'neutro', emoji: '🟡', part1: 'NEU', part2: 'TRO' },
+                'Positive': { sentiment: 'positivo', emoji: '🟢', part1: 'POSI', part2: 'TIVO' },
+                'Negative': { sentiment: 'negativo', emoji: '🔴', part1: 'NEGA', part2: 'TIVO' },
+                'Neutral':   { sentiment: 'neutro', emoji: '🟡', part1: 'NEU', part2: 'TRO' },
                 'default':  { sentiment: 'default', emoji: '🧠', part1: 'SENTI', part2: 'MENTO' }
             };
 
@@ -384,6 +501,8 @@
             // 2. Função de Análise (POST para a API Java)
             analyzeButton.addEventListener('click', async () => {
                 const text = textInput.value.trim();
+                const selectedModel = document.getElementById('modelSelect').value;
+
                 if (text.length === 0) return;
 
                 analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ANALISANDO...';
@@ -395,7 +514,8 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ text: text })
+                        body: JSON.stringify({text: text,
+                            model_type: selectedModel })
                     });
                     
                     if (!response.ok) {
@@ -409,6 +529,9 @@
                     const probabilidade = (result.probabilidade * 100).toFixed(1);
 
                     updateResult(previsao, `Confiança: ${probabilidade}%`);
+                    
+                    // Atualiza o histórico após sucesso
+                    fetchHistory();
 
                 } catch (error) {
                     console.error('Erro na análise:', error);
@@ -421,9 +544,12 @@
 
             // 3. Função de Atualização Visual (Mágica da Cor e Texto)
             function updateResult(sentimentString, probabilityText) {
+                console.log("updateResult called with:", sentimentString, probabilityText);
                 // Normaliza a string (ex: 'Positivo' -> 'positivo')
                 const sentimentKey = sentimentString.charAt(0).toUpperCase() + sentimentString.slice(1).toLowerCase();
                 const data = sentimentMap[sentimentKey] || sentimentMap['default'];
+                console.log("sentimentKey:", sentimentKey);
+                console.log("data:", data);
 
                 bodyElement.classList.remove('loaded');
                 
@@ -443,8 +569,69 @@
                 resultProbability.textContent = probabilityText;
             }
 
+            // 4. Função para Buscar e Exibir Histórico
+            async function fetchHistory() {
+                console.log('Fetching history from:', HISTORY_URL);
+                try {
+                    const response = await fetch(HISTORY_URL);
+                    if (!response.ok) throw new Error('Falha ao buscar histórico: ' + response.status);
+                    
+                    const data = await response.json();
+                    console.log('History data received:', data);
+                    
+                    // Ordenar por ID decrescente (mais recente primeiro)
+                    data.sort((a, b) => b.id - a.id);
+
+                    const tbody = document.querySelector('#history-table tbody');
+                    if (!tbody) {
+                        console.error('Tbody not found!');
+                        return;
+                    }
+                    tbody.innerHTML = ''; // Limpar tabela
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma análise realizada ainda.</td></tr>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        
+                        // Formatar Data (PT-BR)
+                        const dateObj = new Date(item.createdAt);
+                        const dateStr = dateObj.toLocaleString('pt-BR');
+
+                        // Badge de Previsão
+                        let badgeClass = 'badge-neu';
+                        if (item.prediction.toLowerCase() === 'positive') badgeClass = 'badge-pos';
+                        if (item.prediction.toLowerCase() === 'negative') badgeClass = 'badge-neg';
+                        
+                        // Tratamento de Probabilidade e Idioma
+                        const prob = (item.probability * 100).toFixed(1) + '%';
+                        const lang = item.language ? item.language.toUpperCase() : '-';
+
+                        tr.innerHTML = `
+                            <td>${item.id}</td>
+                            <td>${dateStr}</td>
+                            <td>${lang}</td>
+                            <td>${item.modelType}</td>
+                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.originalText}">${item.originalText}</td>
+                            <td><span class="badge ${badgeClass}">${item.prediction}</span></td>
+                            <td>${prob}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                } catch (error) {
+                    console.error('Erro ao carregar histórico:', error);
+                }
+            }
+
             // --- LÓGICA DE CARREGAMENTO E ANIMAÇÃO ---
             document.addEventListener('DOMContentLoaded', () => {
+                // Carrega histórico inicial
+                fetchHistory();
+
                 // Animação de entrada (body.loaded)
                 setTimeout(() => { document.body.classList.add('loaded'); }, 500);
 
