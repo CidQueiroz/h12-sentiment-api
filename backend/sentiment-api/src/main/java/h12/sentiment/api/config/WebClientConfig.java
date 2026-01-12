@@ -5,43 +5,43 @@ import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Configuration
 public class WebClientConfig {
 
-  @Value("${microservice.url:https://g064f0b27cc2c88_sentimenth12_high.adb.sa-saopaulo-1.oraclecloud.com}")
+  @Value("${microservice.url}")
   private String microserviceUrl;
 
   @Bean
   public WebClient sentimentWebClient() {
-
     HttpClient httpClient = HttpClient.create()
-        // Timeout máximo de resposta do microserviço
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+        .doOnConnected(conn -> conn
+            .addHandlerLast(new ReadTimeoutHandler(30))
+            .addHandlerLast(new WriteTimeoutHandler(30)))
         .responseTimeout(Duration.ofSeconds(30));
+
+    ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
 
     return WebClient.builder()
         .baseUrl(microserviceUrl)
-        .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(httpClient))
-        .defaultHeader("Content-Type", "application/json")
-        .defaultHeader("Accept", "application/json")
+        .clientConnector(connector)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
         .filter((request, next) -> next.exchange(request)
             .flatMap(response -> {
               if (response.statusCode().isError()) {
-                return response.bodyToMono(String.class)
-                    .defaultIfEmpty("Erro desconhecido no microserviço")
-                    .flatMap(body -> Mono.error(
-                        new WebClientResponseException(
-                            response.statusCode().value(),
-                            "Erro ao chamar microserviço",
-                            response.headers().asHttpHeaders(),
-                            body.getBytes(),
-                            null)));
+                return response.createException().flatMap(Mono::error);
               }
               return Mono.just(response);
             }))
