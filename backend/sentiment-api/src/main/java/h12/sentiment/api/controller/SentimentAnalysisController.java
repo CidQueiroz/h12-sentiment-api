@@ -42,16 +42,21 @@ public class SentimentAnalysisController {
 
   /**
    * GET /sentiment/history
-   * Retorna o histórico de análises em streaming (Flux).
+   * Retorna o histórico de análises como Mono<List<SentimentDetailedDTO>>
    */
-  @GetMapping("/history")
-  public Flux<SentimentDetailedDTO> getAllAnalyses() {
-
+  @GetMapping(value = "/history", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<List<SentimentDetailedDTO>> getAllAnalyses() {
     return service.getAllAnalyses()
-        .map(SentimentDetailedDTO::new)
-        .onErrorResume(e -> {
-          // log opcional
-          return Flux.empty();
+        .map(list -> list.stream()
+            .map(SentimentDetailedDTO::new) // adapta se o construtor aceitar entity
+            .collect(Collectors.toList()))
+        .onErrorResume(ex -> {
+          // Se for ResponseStatusException (503), deixe-o propagar para o cliente com
+          // status 503.
+          // Caso queira que o endpoint retorne lista vazia em vez de erro, descomente a
+          // linha abaixo:
+          // return Mono.just(Collections.emptyList());
+          return Mono.error(ex);
         });
   }
 }

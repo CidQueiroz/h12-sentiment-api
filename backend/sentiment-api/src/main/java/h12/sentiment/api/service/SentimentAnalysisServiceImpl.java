@@ -5,12 +5,15 @@ import h12.sentiment.api.dto.MicroserviceResponseDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
 import h12.sentiment.api.entity.SentimentAnalysisEntity;
 import h12.sentiment.api.repository.SentimentAnalysisRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
@@ -18,9 +21,18 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
   private final WebClient sentimentWebClient;
   private final SentimentAnalysisRepository repository;
 
+  @Value("${semaphore.size:18}")
+  private int semaphoreSize;
+
+  private Semaphore dbSemaphore;
+
   public SentimentAnalysisServiceImpl(WebClient sentimentWebClient, SentimentAnalysisRepository repository) {
     this.sentimentWebClient = sentimentWebClient;
     this.repository = repository;
+    if (this.semaphoreSize <= 0) {
+      this.semaphoreSize = 1;
+    }
+    this.dbSemaphore = new Semaphore(this.semaphoreSize);
   }
 
   @Override
@@ -51,7 +63,17 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
 
   @Override
   public Mono<List<SentimentAnalysisEntity>> getAllAnalyses() {
-    return repository.findAll()
-        .collectList();
+    // proteção simples com Semaphore: tenta adquirir, senão retorna 503 rapidamente
+    return Mono.defer(() -> {
+      boolean acquired = dbSemaphore.tryAcquire();
+      if (!acquired) {
+        return Mono.error(new ResponseStatusException(
+            org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "DB busy, try later"));
+      }
+
+      return repository.findAll()
+          .collectList()
+          .doFinally(signal -> dbSemaphore.release());
+    });
   }
 }
