@@ -7,7 +7,8 @@ WORKDIR /workspace
 COPY . .
 
 # Executa o build do Maven para gerar o JAR, tratando permissões no mvnw
-RUN chmod +x ./mvnw && ./mvnw package -DskipTests
+RUN chmod +x ./mvnw && ./mvnw clean package -Dmaven.test.skip=true
+
 
 # Estágio de Produção
 FROM eclipse-temurin:17-jre-focal

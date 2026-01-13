@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface SentimentAnalysisService {
-    Mono<OutputSentimentDTO> createAnalysis(InputSentimentDTO input);
-    Mono<OutputSentimentDTO> getOneAnalysis();
-    Mono<List<SentimentAnalysisEntity>> getAllAnalyses();
+    OutputSentimentDTO createAnalysis(InputSentimentDTO input);
+    OutputSentimentDTO getOneAnalysis();
+    List<SentimentAnalysisEntity> getAllAnalyses();
 }

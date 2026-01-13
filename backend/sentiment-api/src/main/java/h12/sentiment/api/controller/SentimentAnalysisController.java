@@ -3,17 +3,16 @@ package h12.sentiment.api.controller;
 import h12.sentiment.api.dto.InputSentimentDTO;
 import h12.sentiment.api.dto.OutputSentimentDTO;
 import h12.sentiment.api.dto.SentimentDetailedDTO;
+import h12.sentiment.api.entity.SentimentAnalysisEntity;
 import h12.sentiment.api.service.SentimentAnalysisService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-/**
- * Controller reativo para análise de sentimento.
- */
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/sentiment")
 @CrossOrigin(origins = "*")
@@ -30,33 +29,33 @@ public class SentimentAnalysisController {
    * Cria uma nova análise de sentimento.
    */
   @PostMapping
-  public Mono<ResponseEntity<OutputSentimentDTO>> createAnalysis(
-      @Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
+  public ResponseEntity<OutputSentimentDTO> createAnalysis(
+          @Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
 
-    return service.createAnalysis(inputSentimentDTO)
-        .map(ResponseEntity::ok)
-        .onErrorResume(e -> Mono.just(
-            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(new OutputSentimentDTO("serviço_indisponivel", 0.0))));
+    try {
+      OutputSentimentDTO output = service.createAnalysis(inputSentimentDTO);
+      return ResponseEntity.ok(output);
+    } catch (Exception e) {
+      // tratamento simples de erro
+      OutputSentimentDTO errorOutput = new OutputSentimentDTO("serviço_indisponivel", 0.0);
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorOutput);
+    }
   }
 
   /**
    * GET /sentiment/history
-   * Retorna o histórico de análises como Mono<List<SentimentDetailedDTO>>
+   * Retorna o histórico de análises.
    */
-  @GetMapping(value = "/history", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Mono<List<SentimentDetailedDTO>> getAllAnalyses() {
-    return service.getAllAnalyses()
-        .map(list -> list.stream()
-            .map(SentimentDetailedDTO::new) // adapta se o construtor aceitar entity
-            .collect(Collectors.toList()))
-        .onErrorResume(ex -> {
-          // Se for ResponseStatusException (503), deixe-o propagar para o cliente com
-          // status 503.
-          // Caso queira que o endpoint retorne lista vazia em vez de erro, descomente a
-          // linha abaixo:
-          // return Mono.just(Collections.emptyList());
-          return Mono.error(ex);
-        });
+  @GetMapping("/history")
+  public ResponseEntity<List<SentimentDetailedDTO>> getAllAnalyses() {
+    try {
+      List<SentimentAnalysisEntity> entities = service.getAllAnalyses();
+      List<SentimentDetailedDTO> result = entities.stream()
+              .map(SentimentDetailedDTO::new) // adapta se o construtor aceitar entity
+              .collect(Collectors.toList());
+      return ResponseEntity.ok(result);
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
   }
 }

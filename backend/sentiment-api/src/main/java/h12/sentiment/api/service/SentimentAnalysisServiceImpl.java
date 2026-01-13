@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -24,7 +23,7 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
   @Value("${semaphore.size:18}")
   private int semaphoreSize;
 
-  private Semaphore dbSemaphore;
+  private final Semaphore dbSemaphore;
 
   public SentimentAnalysisServiceImpl(WebClient sentimentWebClient, SentimentAnalysisRepository repository) {
     this.sentimentWebClient = sentimentWebClient;
@@ -36,44 +35,73 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
   }
 
   @Override
-  public Mono<OutputSentimentDTO> createAnalysis(InputSentimentDTO input) {
-    return sentimentWebClient.post()
-        .uri("/predict")
-        .accept(MediaType.APPLICATION_JSON)
-        .bodyValue(input)
-        .retrieve()
-        .bodyToMono(MicroserviceResponseDTO.class)
-        .flatMap(response -> {
-          // monta/atualiza a entity a partir do DTO e da resposta do microservice
-          SentimentAnalysisEntity entity = input.toEntity();
-          entity.setPrediction(response.previsao());
-          entity.setProbability(response.probabilidade());
-          entity.setLanguage(response.idioma());
+  public OutputSentimentDTO createAnalysis(InputSentimentDTO input) {
+    // chama o microservice e bloqueia para esperar a resposta
+    MicroserviceResponseDTO response;
+    try {
+      response = sentimentWebClient.post()
+              .uri("/predict")
+              .accept(MediaType.APPLICATION_JSON)
+              .bodyValue(input)
+              .retrieve()
+              .bodyToMono(MicroserviceResponseDTO.class)
+              .block(); // bloqueante
+    } catch (Exception e) {
+      throw new ResponseStatusException(
+              org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+              "Microservice unavailable", e
+      );
+    }
 
-          // salva usando repository reativo (não bloquear)
-          return repository.save(entity)
-              .map(saved -> new OutputSentimentDTO(saved)); // usa construtor que aceita a entity
-        });
-  }
+    // monta/atualiza a entity a partir do DTO e da resposta do microservice
+    SentimentAnalysisEntity entity = input.toEntity();
+    entity.setPrediction(response.previsao());
+    entity.setProbability(response.probabilidade());
+    entity.setLanguage(response.idioma());
 
-  @Override
-  public Mono<OutputSentimentDTO> getOneAnalysis() {
-    return Mono.just(new OutputSentimentDTO("Positive", 0.99));
-  }
-
-  @Override
-  public Mono<List<SentimentAnalysisEntity>> getAllAnalyses() {
-    // proteção simples com Semaphore: tenta adquirir, senão retorna 503 rapidamente
-    return Mono.defer(() -> {
-      boolean acquired = dbSemaphore.tryAcquire();
+    // proteção com semaphore
+    boolean acquired = false;
+    try {
+      acquired = dbSemaphore.tryAcquire();
       if (!acquired) {
-        return Mono.error(new ResponseStatusException(
-            org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "DB busy, try later"));
+        throw new ResponseStatusException(
+                org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+                "DB busy, try later"
+        );
       }
 
-      return repository.findAll()
-          .collectList()
-          .doFinally(signal -> dbSemaphore.release());
-    });
+      // salva usando JPA repository (bloqueante)
+      SentimentAnalysisEntity saved = repository.save(entity);
+
+      // retorna DTO baseado na entity salva
+      return new OutputSentimentDTO(saved);
+
+    } finally {
+      if (acquired) {
+        dbSemaphore.release();
+      }
+    }
+  }
+
+  @Override
+  public OutputSentimentDTO getOneAnalysis() {
+    return new OutputSentimentDTO("Positive", 0.99);
+  }
+
+  @Override
+  public List<SentimentAnalysisEntity> getAllAnalyses() {
+    boolean acquired = dbSemaphore.tryAcquire();
+    if (!acquired) {
+      throw new ResponseStatusException(
+              org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+              "DB busy, try later"
+      );
+    }
+
+    try {
+      return repository.findAll(); // retorna diretamente a lista
+    } finally {
+      dbSemaphore.release();
+    }
   }
 }

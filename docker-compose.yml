@@ -10,7 +10,7 @@ services:
         condition: service_started
     environment:
       MICROSERVICE_URL: http://microservice:8000
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-jpa-prod}
       DB_URL: jdbc:oracle:thin:@sentimenth12_high?TNS_ADMIN=/app/wallet
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
