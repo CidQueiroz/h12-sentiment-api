@@ -6,6 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 import pickle
 import argparse
 
@@ -96,6 +97,9 @@ def train_and_save_model(language, model_type):
     elif model_type == 'nb':
         model = MultinomialNB()
         model_name = f'nb_model_{language}.pkl'
+    elif model_type == 'lr':
+        model = LogisticRegression(max_iter=1000)
+        model_name = f'lr_model_{language}.pkl'
     else:
         raise ValueError("Model type not supported")
 
@@ -114,7 +118,7 @@ def train_and_save_model(language, model_type):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train sentiment analysis models.")
     parser.add_argument('--language', type=str, required=True, choices=['en', 'es', 'pt'], help='Language of the model')
-    parser.add_argument('--model_type', type=str, required=True, choices=['svm', 'nb'], help='Type of model to train (svm or nb)')
+    parser.add_argument('--model_type', type=str, required=True, choices=['svm', 'nb', 'lr'], help='Type of model to train (svm, nb, or lr)')
     args = parser.parse_args()
     
     train_and_save_model(args.language, args.model_type)
