@@ -21,7 +21,7 @@ app.add_middleware(
 # --- Modelos de Entrada e Saída ---
 class ModelInput(BaseModel):
     text: str
-    model_type: str # 'svm' ou 'nb'
+    model_type: str # 'svm', 'nb' ou 'lr'
 
 class ModelOutput(BaseModel):
     previsao: str
@@ -72,6 +72,12 @@ def load_models():
         if os.path.exists(nb_model_path):
             models[f"nb_{lang}"] = joblib.load(nb_model_path)
             print(f"✅ Carregado: nb_model_{lang}.pkl")
+
+        # Carrega o modelo Logistic Regression
+        lr_model_path = os.path.join(MODELS_DIR, f"lr_model_{lang}.pkl")
+        if os.path.exists(lr_model_path):
+            models[f"lr_{lang}"] = joblib.load(lr_model_path)
+            print(f"✅ Carregado: lr_model_{lang}.pkl")
 
 
 # Executa o carregamento na inicialização da aplicação
