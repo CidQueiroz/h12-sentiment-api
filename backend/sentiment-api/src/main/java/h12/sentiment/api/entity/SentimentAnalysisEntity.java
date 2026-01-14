@@ -1,43 +1,47 @@
 package h12.sentiment.api.entity;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.Column;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "sentiment_analysis")
+/**
+ * Entidade mapeada para Spring Data R2DBC.
+ * As colunas usam snake_case para casar com o migration do Flyway.
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table("sentiment_analysis")
 public class SentimentAnalysisEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  private Long id;
 
-    @Lob
-    @Column(nullable = false)
-    private String originalText;
+  @Column("original_text")
+  private String originalText;
 
-    @Column(nullable = false)
-    private String modelType;
+  @Column("model_type")
+  private String modelType;
 
-    @Column(nullable = false)
-    private String prediction;
+  @Column("prediction")
+  private String prediction;
 
-    @Column(nullable = false)
-    private Double probability;
+  @Column("probability")
+  private Double probability;
 
-    @Column
-    private String language;
+  @Column("lang")
+  private String language;
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+  /**
+   * Criado no DB via DEFAULT CURRENT_TIMESTAMP (migration).
+   */
+  @Column("created_at")
+  private LocalDateTime createdAt;
 }
