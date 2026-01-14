@@ -165,7 +165,12 @@ header {
     cursor: pointer; padding: 8px 15px; transition: 0.3s;
 }
 
-.tab-btn.active { color: white; text-shadow: 0 0 10px white; border-bottom: 2px solid white; }
+.tab-btn.active { 
+    color: white; 
+    text-shadow: 0 0 10px white; 
+    border-bottom: 3px solid;
+    border-image: var(--gradient-nc) 1;
+}
 
 /* --- CONTENT --- */
 main {

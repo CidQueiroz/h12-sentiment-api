@@ -51,9 +51,9 @@
                 <textarea id="inputText" rows="4" placeholder="O que seu cliente está dizendo?"></textarea>
                 <div style="display:flex; justify-content: space-between; align-items: center;">
                     <select id="modelSelect">
-                        <option value="nb">Naive Bayes</option>
+                        <option value="nb">Naive Bayes (Rápido)</option>
                         <option value="svm">SVM (Preciso)</option>
-                        <option value="lr">Logistic Regression</option>
+                        <option value="lr">Logistic Regression (Média)</option>
                     </select>
                     <button class="btn-analyze" onclick="analyzeSentiment()">PROCESSAR</button>
                 </div>
@@ -147,9 +147,12 @@
         let modalChart = null;
 
         const visualMap = {
-            'positive': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '🟢' },
-            'negative': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '🔴' },
-            'neutral':  { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '⚪' },
+            'positive': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
+            'negative': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
+            'neutral':  { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
+            'positivo': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
+            'negativo': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
+            'neutro':   { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
             'default':  { wordL: 'SENTI', wordR: 'MENTO', color: 'default', icon: '' }
         };
 
@@ -205,7 +208,8 @@
                     body: JSON.stringify({ text, model_type: model })
                 });
                 const data = await res.json();
-                applyVisuals(data.previsao.toLowerCase(), data.probabilidade);
+
+              applyVisuals((data.previsao || '').trim().toLowerCase(), data.probabilidade);
             } catch (err) { alert('Erro na conexão.'); }
             finally { btn.disabled = false; btn.innerText = 'PROCESSAR'; }
         }
@@ -232,8 +236,10 @@
                 tbody.innerHTML = '';
                 sorted.forEach(item => {
                     const tr = document.createElement('tr');
-                    let pred = item.prediction.toLowerCase();
-                    let pill = pred === 'positive' ? 'pill-pos' : (pred === 'negative' ? 'pill-neg' : '');
+
+                    let pred = (item.prediction || '').trim().toLowerCase();
+                    let pill = ['positive', 'positivo'].includes(pred) ? 'pill-pos' : (['negative', 'negativo'].includes(pred) ? 'pill-neg' : '');
+
                     const dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
                     tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
                     tbody.appendChild(tr);
@@ -243,9 +249,10 @@
         }
 
         function updateDashboard(data) {
-             const pos = data.filter(i => i.prediction.toLowerCase() === 'positive').length;
-            const neg = data.filter(i => i.prediction.toLowerCase() === 'negative').length;
-            const neu = data.filter(i => i.prediction.toLowerCase() === 'neutral').length;
+             const pos = data.filter(i => ['positive', 'positivo'].includes((i.prediction||'').toLowerCase())).length;
+            const neg = data.filter(i => ['negative', 'negativo'].includes((i.prediction||'').toLowerCase())).length;
+            const neu = data.filter(i => ['neutral', 'neutro'].includes((i.prediction||'').toLowerCase())).length;
+
             const total = data.length;
 
             document.getElementById('kpiTotal').innerText = total;
@@ -286,13 +293,12 @@
             };
 
             // 4. Radar
-            const getAvg = (pred) => {
-                const f = data.filter(i => i.prediction.toLowerCase() === pred);
+            const getAvg = (preds) => {
+                const f = data.filter(i => preds.includes((i.prediction||'').toLowerCase()));
                 return f.length ? (f.reduce((a,c)=>a+c.probability,0)/f.length*100).toFixed(1) : 0;
             };
             const radarData = {
                 labels: ['Positivo', 'Negativo', 'Neutro'],
-                datasets: [{ label: 'Confiança (%)', data: [getAvg('positive'), getAvg('negative'), getAvg('neutral')], backgroundColor: 'rgba(249,3,153,0.2)', borderColor: '#F90399' }]
             };
 
             // 5. Languages
@@ -303,11 +309,11 @@
                 datasets: [{ data: Object.values(langCount), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'] }]
             };
 
-            // 6. Sentiment by Model (Stacked)
+            // 6. Sentiment by Model (Stacked Bar)
             const models = [...new Set(data.map(i => i.modelType))];
-            const stackPos = models.map(m => data.filter(i => i.modelType === m && i.prediction.toLowerCase() === 'positive').length);
-            const stackNeg = models.map(m => data.filter(i => i.modelType === m && i.prediction.toLowerCase() === 'negative').length);
-            const stackNeu = models.map(m => data.filter(i => i.modelType === m && i.prediction.toLowerCase() === 'neutral').length);
+            const stackPos = models.map(m => data.filter(i => i.modelType === m && ['positive','positivo'].includes((i.prediction||'').toLowerCase())).length);
+            const stackNeg = models.map(m => data.filter(i => i.modelType === m && ['negative','negativo'].includes((i.prediction||'').toLowerCase())).length);
+            const stackNeu = models.map(m => data.filter(i => i.modelType === m && ['neutral','neutro'].includes((i.prediction||'').toLowerCase())).length);
             
             const sentModelData = {
                 labels: models,
