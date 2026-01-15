@@ -7,8 +7,8 @@ public class InputSentimentDTO {
     @NotBlank(message = "O campo 'text' não pode estar vazio.")
     private String text;
 
-    @NotBlank(message = "O campo 'model_type' não pode estar vazio.")
-    private String model_type;
+    @NotBlank(message = "O campo 'algorithm' não pode estar vazio.")
+    private String algorithm;
 
     // Getters e Setters
     public String getText() {
@@ -19,11 +19,11 @@ public class InputSentimentDTO {
         this.text = text;
     }
 
-    public String getModel_type() {
-        return model_type;
+    public String getAlgorithm() {
+        return algorithm;
     }
 
-    public void setModel_type(String model_type) {
-        this.model_type = model_type;
+    public void setAlgorithm(String algorithm) {
+        this.algorithm = algorithm;
     }
 }

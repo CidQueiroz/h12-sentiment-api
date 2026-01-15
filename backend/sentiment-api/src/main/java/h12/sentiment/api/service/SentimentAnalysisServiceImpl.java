@@ -43,7 +43,7 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
         return Mono.fromCallable(() -> {
             SentimentAnalysisEntity entity = SentimentAnalysisEntity.builder()
                     .originalText(input.getText())
-                    .modelType(input.getModel_type())
+                    .modelType(input.getAlgorithm())
                     .prediction(response.previsao())
                     .probability(response.probabilidade())
                     .language(response.idioma())

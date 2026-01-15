@@ -30,6 +30,10 @@ gemini.md
 *.csv
 data-science/train_logistic_temp.py
 
+# Models (Avoid duplication in Git)
+data-science/**/*.pkl
+!microservice/models/*.pkl
+
 # Security and Secrets
 .env
 wallet/
