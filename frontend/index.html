@@ -1,523 +1,494 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>H12 - Dashboard de Sentimento</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="mode-analysis" data-sentiment="default">
-
-    <!-- MODAL FOR CHARTS -->
-    <div id="chartModal" class="chart-modal" onclick="closeModal(event)">
-        <div class="chart-modal-content">
-            <span class="close-modal" onclick="closeModal(event)">&times;</span>
-            <div style="position: relative; height: 90%; width: 100%;">
-                <canvas id="modalCanvas"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- VISUAL ELEMENTS -->
-    <div class="particles" id="particles"></div>
-    <h1 class="context-title" id="context-title">ANÁLISE DE</h1>
-    <div class="animated-logo logo-left" id="wordLeft">SENTI</div>
-    <div class="animated-logo logo-right" id="wordRight">MENTO</div>
-
-    <header>
-        <div class="brand"><i class="fas fa-puzzle-piece"></i> H12 SENTIMENT API</div>
-        <nav class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('analysis')">ANÁLISE</button>
-            <button class="tab-btn" onclick="switchTab('history')">HISTÓRICO</button>
-            <button class="tab-btn" onclick="switchTab('dashboard')">DASHBOARD</button>
-        </nav>
-    </header>
-
-    <main>
-        <!-- TAB 1: ANALYZER -->
-        <div id="tab-analysis" class="tab-content" style="display:flex;">
-            <div class="analyzer-card">
-                <h2 style="font-family: var(--font-display);">Nova Análise</h2>
-                <textarea id="inputText" rows="4" placeholder="O que seu cliente está dizendo?"></textarea>
-                <div style="display:flex; justify-content: space-between; align-items: center;">
-                    <select id="modelSelect">
-                        <option value="nb">Naive Bayes (Rápido)</option>
-                        <option value="svm">SVM (Preciso)</option>
-                        <option value="lr">Logistic Regression (Média)</option>
-                    </select>
-                    <button class="btn-analyze" onclick="analyzeSentiment()">PROCESSAR</button>
-                </div>
-                <div id="resultBox" class="result-box">
-                    <div id="resultEmoji" style="font-size: 3rem; margin-bottom: 10px;"></div>
-                    <h3 id="resultLabel"></h3>
-                    <p id="resultProb" style="color: var(--nc-text-muted);"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 2: HISTORY -->
-        <div id="tab-history" class="tab-content">
-            <h2 style="margin-bottom: 20px;">Histórico de Análises</h2>
-            <div class="table-container" style="overflow-x: auto;">
-                <table id="historyTable">
-                    <thead>
-                        <tr><th>ID</th><th>Data</th><th>Modelo</th><th>Idioma</th><th>Feedback</th><th>Sentimento</th><th>Confiança</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- TAB 3: DASHBOARD -->
-        <div id="tab-dashboard" class="tab-content">
-            <div class="kpi-row">
-                <div class="kpi-card"><div class="kpi-label">Total</div><div class="kpi-value" id="kpiTotal">0</div></div>
-                <div class="kpi-card"><div class="kpi-label">ROI Est.</div><div class="kpi-value" id="kpiRoi" style="color: #00e676;">R$ 0,00</div></div>
-                <div class="kpi-card"><div class="kpi-label">Positividade</div><div class="kpi-value" id="kpiPositivity">0%</div></div>
-            </div>
-
-            <div class="chart-grid-enhanced">
-                <!-- 1. Distribution (Pie) -->
-                <div class="mini-chart-card" onclick="openChartModal('dist')">
-                    <h4>Distribuição Geral <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartDistMini"></canvas></div>
-                </div>
-                <!-- 2. Timeline (Line) -->
-                <div class="mini-chart-card" onclick="openChartModal('time')">
-                    <h4>Evolução Temporal <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartTimeMini"></canvas></div>
-                </div>
-                <!-- 3. Models Usage (Bar) -->
-                <div class="mini-chart-card" onclick="openChartModal('models')">
-                    <h4>Uso de Modelos <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartModelsMini"></canvas></div>
-                </div>
-                <!-- 4. Language Confidence (Radar) -->
-                <div class="mini-chart-card" onclick="openChartModal('radar')">
-                    <h4>Confiança Média <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartRadarMini"></canvas></div>
-                </div>
-                <!-- 5. Languages (Pie) -->
-                <div class="mini-chart-card" onclick="openChartModal('langs')">
-                    <h4>Idiomas Processados <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartLangsMini"></canvas></div>
-                </div>
-                <!-- 6. Sentiment by Model (Stacked Bar) -->
-                <div class="mini-chart-card" onclick="openChartModal('sentModel')">
-                    <h4>Sentimento por Modelo <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartSentModelMini"></canvas></div>
-                </div>
-                <!-- 7. Hourly Peak (Bar) -->
-                <div class="mini-chart-card" onclick="openChartModal('hourly')">
-                    <h4>Horários de Pico <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartHourlyMini"></canvas></div>
-                </div>
-                <!-- 8. Confidence Levels (Doughnut/Gauge) -->
-                <div class="mini-chart-card" onclick="openChartModal('conf')">
-                    <h4>Níveis de Certeza <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartConfMini"></canvas></div>
-                </div>
-                <!-- 9. Feedback Length (Horizontal Bar) -->
-                <div class="mini-chart-card" onclick="openChartModal('len')">
-                    <h4>Tamanho do Feedback <i class="fas fa-expand-alt"></i></h4>
-                    <div style="height: 220px; position: relative;"><canvas id="chartLenMini"></canvas></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        const API_URL = 'http://localhost:8080/sentiment';
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>H12 - Dashboard de Sentimento</title>
         
-        let globalData = [];
-        let charts = { 
-            dist: null, time: null, models: null, radar: null,
-            langs: null, sentModel: null, hourly: null, conf: null, len: null 
-        };
-        let modalChart = null;
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="favicon.png">
 
-        const visualMap = {
-            'positive': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
-            'negative': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
-            'neutral':  { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
-            'positivo': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
-            'negativo': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
-            'neutro':   { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
-            'default':  { wordL: 'SENTI', wordR: 'MENTO', color: 'default', icon: '' }
-        };
+        <!-- Styles -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+        
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    
+    <body class="mode-analysis" data-sentiment="default">
 
-        // --- CORE FUNCTIONS ---
-
-        function resetAnalysisState() {
-            document.getElementById('inputText').value = '';
-            document.getElementById('resultBox').style.display = 'none';
-            document.body.setAttribute('data-sentiment', 'default');
-            document.getElementById('wordLeft').innerText = 'SENTI';
-            document.getElementById('wordRight').innerText = 'MENTO';
-            document.body.style.backgroundColor = 'var(--nc-bg-dark)';
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        <!-- MODAL FOR CHARTS -->
+        <div id="chartModal" class="chart-modal" onclick="closeModal(event)">
             
-            const activeDiv = document.getElementById(`tab-${tabName}`);
-            
-            if(tabName === 'analysis') {
-                activeDiv.style.display = 'flex';
-                document.body.classList.add('mode-analysis');
-            } else {
-                activeDiv.style.display = 'block';
-                document.body.classList.remove('mode-analysis');
-                document.body.style.backgroundColor = 'var(--nc-bg-dark)';
-                resetAnalysisState();
-                loadHistoryData();
-            }
-            
-            event.currentTarget.classList.add('active');
-        }
-
-        document.getElementById('inputText').addEventListener('input', (e) => {
-            if(e.target.value.trim() === '') {
-                resetAnalysisState();
-            }
-        });
-
-        async function analyzeSentiment() {
-            const text = document.getElementById('inputText').value;
-            const model = document.getElementById('modelSelect').value;
-            if(!text.trim()) return;
-
-            const btn = document.querySelector('.btn-analyze');
-            btn.disabled = true; btn.innerText = '...';
-
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, algorithm: model })
-                });
-                const data = await res.json();
-                applyVisuals((data.previsao || '').trim().toLowerCase(), data.probabilidade);
-            } catch (err) { alert('Erro na conexão.'); }
-            finally { btn.disabled = false; btn.innerText = 'PROCESSAR'; }
-        }
-
-        function applyVisuals(sentiment, prob) {
-            const config = visualMap[sentiment] || visualMap['default'];
-            document.body.setAttribute('data-sentiment', config.color);
-            document.getElementById('wordLeft').innerText = config.wordL;
-            document.getElementById('wordRight').innerText = config.wordR;
-            const box = document.getElementById('resultBox');
-            box.style.display = 'block';
-            document.getElementById('resultEmoji').innerText = config.icon;
-            document.getElementById('resultLabel').innerText = sentiment.toUpperCase();
-            document.getElementById('resultProb').innerText = `Confiança: ${(prob*100).toFixed(1)}%`;
-        }
-
-        async function loadHistoryData() {
-            try {
-                const res = await fetch(`${API_URL}/history`);
-                globalData = await res.json();
-                const sorted = [...globalData].sort((a,b) => b.id - a.id);
+            <div class="chart-modal-content">
                 
-                const tbody = document.querySelector('#historyTable tbody');
-                tbody.innerHTML = '';
-                sorted.forEach(item => {
-                    const tr = document.createElement('tr');
-                    let pred = (item.prediction || '').trim().toLowerCase();
-                    let pill = ['positive', 'positivo'].includes(pred) ? 'pill-pos' : (['negative', 'negativo'].includes(pred) ? 'pill-neg' : '');
-                    const dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
-                    tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td>${item.language || 'N/A'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
-                    tbody.appendChild(tr);
-                });
-                updateDashboard(globalData);
-            } catch(e) {}
-        }
-
-        function updateDashboard(data) {
-             const pos = data.filter(i => ['positive', 'positivo'].includes((i.prediction||'').toLowerCase())).length;
-            const neg = data.filter(i => ['negative', 'negativo'].includes((i.prediction||'').toLowerCase())).length;
-            const neu = data.filter(i => ['neutral', 'neutro'].includes((i.prediction||'').toLowerCase())).length;
-            const total = data.length;
-
-            document.getElementById('kpiTotal').innerText = total;
-            document.getElementById('kpiRoi').innerText = `R$ ${(total*2.5).toFixed(2)}`;
-            document.getElementById('kpiPositivity').innerText = total ? ((pos/total)*100).toFixed(0)+'%' : '0%';
-
-            // 1. Distribution
-            const distData = {
-                labels: ['Positivo', 'Negativo', 'Neutro'],
-                datasets: [{ data: [pos, neg, neu], backgroundColor: ['#28a745', '#dc3545', '#6c757d'], borderColor: '#1e1e2f' }]
-            };
-
-            // 2. Timeline
-            const timeline = {};
-            data.forEach(i => { 
-                const d = new Date(i.createdAt).toLocaleDateString('pt-BR'); 
-                timeline[d] = (timeline[d]||0)+1; 
-            });
+                <span class="close-modal" onclick="closeModal(event)">&times;</span>
+                
+                <div style="position: relative; height: 90%; width: 100%;">
+                    <canvas id="modalCanvas"></canvas>
+                </div>
             
-            // Sort dates (convert DD/MM/YYYY to Date object for sorting)
-            const dates = Object.keys(timeline).sort((a,b) => {
-                const [da, ma, ya] = a.split('/');
-                const [db, mb, yb] = b.split('/');
-                return new Date(ya, ma-1, da) - new Date(yb, mb-1, db);
-            });
+            </div>
+
+        </div>
+
+        <!-- VISUAL ELEMENTS -->
+        <div class="particles" id="particles"></div>
+        <h1 class="context-title" id="context-title">ANÁLISE DE</h1>
+        <div class="animated-logo logo-left" id="wordLeft">SENTI</div>
+        <div class="animated-logo logo-right" id="wordRight">MENTO</div>
+
+        <header>
+
+            <div class="brand"><i class="fas fa-puzzle-piece"></i> H12 SENTIMENT API</div>
             
-            const timeData = {
-                labels: dates,
-                datasets: [{ label: 'Volume', data: dates.map(d => timeline[d]), borderColor: '#2E9EE0', backgroundColor: 'rgba(46,158,224,0.2)', fill: true, tension: 0.4 }]
-            };
+            <nav class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('analysis')">ANÁLISE</button>
+                <button class="tab-btn" onclick="switchTab('history')">HISTÓRICO</button>
+                <button class="tab-btn" onclick="switchTab('dashboard')">DASHBOARD</button>
+            </nav>
 
-            // 3. Models Usage
-            const modelsCount = {};
-            data.forEach(i => { modelsCount[i.modelType] = (modelsCount[i.modelType] || 0) + 1; });
-            const modelData = {
-                labels: Object.keys(modelsCount),
-                datasets: [{ label: 'Análises', data: Object.values(modelsCount), backgroundColor: ['#9F4BBA', '#F90399', '#2E9EE0'] }]
-            };
+        </header>
 
-            // 4. Radar
-            const getAvg = (preds) => {
-                const f = data.filter(i => preds.includes((i.prediction||'').toLowerCase()));
-                return f.length ? (f.reduce((a,c)=>a+c.probability,0)/f.length*100).toFixed(1) : 0;
-            };
+        <main>
+            <!-- TAB 1: ANALYZER -->
+            <div id="tab-analysis" class="tab-content" style="display:flex;">
 
-            const radarData = {
-                labels: ['Positivo', 'Negativo'], 
-                datasets: [{ 
-                    label: 'Confiança Média (%)', 
-                    data: [
-                        getAvg(['positive','positivo']), 
-                        getAvg(['negative','negativo'])
-                    ], 
-                    // Cores Semânticas: Verde para Positivo, Vermelho para Negativo
-                    backgroundColor: ['#2ecc71', '#e74c3c'], 
-                    barPercentage: 0.6, // Deixa as barras mais elegantes/finas
-                    borderWidth: 0
-                }]
-            };
+                <div class="analyzer-card">
+                    
+                    <h2 style="font-family: var(--font-display);">Nova Análise</h2>
+                    
+                    <textarea id="inputText" rows="4" placeholder="O que seu cliente está dizendo?"></textarea>
+                    
+                    <div style="display:flex; justify-content: space-between; align-items: center;">
+                        <select id="modelSelect">
+                            <option value="nb">Naive Bayes (Rápido)</option>
+                            <option value="svm">SVM (Preciso)</option>
+                            <option value="lr">Logistic Regression (Média)</option>
+                        </select>
+                        <button class="btn-analyze" onclick="analyzeSentiment()">PROCESSAR</button>
+                    </div>
 
-            // 5. Languages
-            const langCount = {};
-            data.forEach(i => { const l = (i.language||'?').toUpperCase(); langCount[l] = (langCount[l]||0)+1; });
-            const langData = {
-                labels: Object.keys(langCount),
-                datasets: [{ data: Object.values(langCount), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'] }]
-            };
+                    <div id="resultBox" class="result-box">
+                        <div id="resultEmoji" style="font-size: 3rem; margin-bottom: 10px;"></div>
+                        <h3 id="resultLabel"></h3>
+                        <p id="resultProb" style="color: var(--nc-text-muted);"></p>
+                    </div>
 
-            // 6. Sentiment by Model (Stacked Bar)
-            const models = [...new Set(data.map(i => i.modelType))];
-            const stackPos = models.map(m => data.filter(i => i.modelType === m && ['positive','positivo'].includes((i.prediction||'').toLowerCase())).length);
-            const stackNeg = models.map(m => data.filter(i => i.modelType === m && ['negative','negativo'].includes((i.prediction||'').toLowerCase())).length);
-            const stackNeu = models.map(m => data.filter(i => i.modelType === m && ['neutral','neutro'].includes((i.prediction||'').toLowerCase())).length);
+                </div>
+
+            </div>
+
+            <!-- TAB 2: HISTORY -->
+            <div id="tab-history" class="tab-content">
+
+                <h2 style="margin-bottom: 20px;">Histórico de Análises</h2>
+
+                <div class="table-container" style="overflow-x: auto;">
+                    <table id="historyTable">
+                        <thead>
+                            <tr><th>ID</th><th>Data</th><th>Modelo</th><th>Idioma</th><th>Feedback</th><th>Sentimento</th><th>Confiança</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-controls" style="text-align: center; margin-top: 20px;">
+                    <button id="btn-first-page" class="btn-analyze" disabled>Primeira</button>
+                    <button id="btn-prev-page" class="btn-analyze" disabled>Anterior</button>
+                    <span id="page-info" style="color: var(--nc-text-muted); margin: 0 10px;">Página 0 de 0</span>
+                    <button id="btn-next-page" class="btn-analyze" disabled>Próximo</button>
+                    <button id="btn-last-page" class="btn-analyze" disabled>Última</button>
+                </div>
+
+            </div>
+
+            <!-- TAB 3: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content">
+
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-label">Total</div><div class="kpi-value" id="kpiTotal">0</div></div>
+                    <div class="kpi-card"><div class="kpi-label">ROI Est.</div><div class="kpi-value" id="kpiRoi" style="color: #00e676;">R$ 0,00</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Positividade</div><div class="kpi-value" id="kpiPositivity">0%</div></div>
+                </div>
+
+                <div class="chart-grid-enhanced">
+                    <!-- 1. Distribution (Pie) -->
+                    <div class="mini-chart-card" onclick="openChartModal('dist')">
+                        <h4>Distribuição Geral <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartDistMini"></canvas></div>
+                    </div>
+                    <!-- 2. Timeline (Line) -->
+                    <div class="mini-chart-card" onclick="openChartModal('time')">
+                        <h4>Evolução Temporal <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartTimeMini"></canvas></div>
+                    </div>
+                    <!-- 3. Models Usage (Bar) -->
+                    <div class="mini-chart-card" onclick="openChartModal('models')">
+                        <h4>Uso de Modelos <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartModelsMini"></canvas></div>
+                    </div>
+                    <!-- 4. Language Confidence (Radar) -->
+                    <div class="mini-chart-card" onclick="openChartModal('radar')">
+                        <h4>Confiança Média <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartRadarMini"></canvas></div>
+                    </div>
+                    <!-- 5. Languages (Pie) -->
+                    <div class="mini-chart-card" onclick="openChartModal('langs')">
+                        <h4>Idiomas Processados <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartLangsMini"></canvas></div>
+                    </div>
+                    <!-- 6. Sentiment by Model (Stacked Bar) -->
+                    <div class="mini-chart-card" onclick="openChartModal('sentModel')">
+                        <h4>Sentimento por Modelo <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartSentModelMini"></canvas></div>
+                    </div>
+                    <!-- 7. Hourly Peak (Bar) -->
+                    <div class="mini-chart-card" onclick="openChartModal('hourly')">
+                        <h4>Horários de Pico <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartHourlyMini"></canvas></div>
+                    </div>
+                    <!-- 8. Confidence Levels (Doughnut/Gauge) -->
+                    <div class="mini-chart-card" onclick="openChartModal('conf')">
+                        <h4>Níveis de Certeza <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartConfMini"></canvas></div>
+                    </div>
+                    <!-- 9. Feedback Length (Horizontal Bar) -->
+                    <div class="mini-chart-card" onclick="openChartModal('len')">
+                        <h4>Tamanho do Feedback <i class="fas fa-expand-alt"></i></h4>
+                        <div style="height: 220px; position: relative;"><canvas id="chartLenMini"></canvas></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <script>
+            const API_URL = 'http://localhost:8080/sentiment';
             
-            const sentModelData = {
-                labels: models,
-                datasets: [
-                    { label: 'Pos', data: stackPos, backgroundColor: '#28a745' },
-                    { label: 'Neg', data: stackNeg, backgroundColor: '#dc3545' },
-                    { label: 'Neu', data: stackNeu, backgroundColor: '#6c757d' }
-                ]
+            let currentPage = 0;
+            let totalPages = 0;
+            let charts = { 
+                dist: null, time: null, models: null, radar: null,
+                langs: null, sentModel: null, hourly: null, conf: null, len: null 
+            };
+            let modalChart = null;
+
+            const visualMap = {
+                'positive': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
+                'negative': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
+                'neutral':  { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
+                'positivo': { wordL: 'POSI', wordR: 'TIVO', color: 'positive', icon: '😍' },
+                'negativo': { wordL: 'NEGA', wordR: 'TIVO', color: 'negative', icon: '😡' },
+                'neutro':   { wordL: 'NEU', wordR: 'TRO',  color: 'neutral',  icon: '😐' },
+                'default':  { wordL: 'SENTI', wordR: 'MENTO', color: 'default', icon: '' }
             };
 
-            // 7. Hourly Peak
-            const hours = new Array(24).fill(0);
-            data.forEach(i => { const h = new Date(i.createdAt).getHours(); hours[h]++; });
-            const activeHours = hours.map((v,k) => ({h: k, v})).filter(o => o.v > 0);
-            const hourlyData = {
-                labels: activeHours.map(o => `${o.h}h`),
-                datasets: [{ label: 'Volume', data: activeHours.map(o => o.v), backgroundColor: '#2E9EE0' }]
-            };
+            // --- CORE FUNCTIONS ---
 
-            // 8. Confidence Levels
-            const highConf = data.filter(i => i.probability >= 0.9).length;
-            const lowConf = total - highConf;
-            const confData = {
-                labels: ['Alta (>90%)', 'Média/Baixa'],
-                datasets: [{ data: [highConf, lowConf], backgroundColor: ['#00e676', '#ffb74d'], borderWidth: 0 }]
-            };
+            function resetAnalysisState() {
+                document.getElementById('inputText').value = '';
+                document.getElementById('resultBox').style.display = 'none';
+                document.body.setAttribute('data-sentiment', 'default');
+                document.getElementById('wordLeft').innerText = 'SENTI';
+                document.getElementById('wordRight').innerText = 'MENTO';
+                document.body.style.backgroundColor = 'var(--nc-bg-dark)';
+            }
 
-            // 9. Feedback Length
-            let short = 0, medium = 0, long = 0;
-            data.forEach(i => {
-                const len = i.originalText ? i.originalText.length : 0;
-                if(len < 20) short++;
-                else if(len <= 100) medium++;
-                else long++;
-            });
-            const lenData = {
-                labels: ['Curtos (<20)', 'Médios (20-100)', 'Longos (>100)'],
-                datasets: [{
-                    label: 'Volume',
-                    data: [short, medium, long],
-                    backgroundColor: ['#4BC0C0', '#FFCE56', '#FF6384'],
-                    indexAxis: 'y'
-                }]
-            };
-
-
-            // RENDER ALL
-            renderMiniChart('dist', 'chartDistMini', 'doughnut', distData);
-            renderMiniChart('time', 'chartTimeMini', 'line', timeData);
-            renderMiniChart('models', 'chartModelsMini', 'bar', modelData);
-            renderMiniChart('radar', 'chartRadarMini', 'bar', radarData, {indexAxis: 'y',scales:{x:{min:0,max:100,ticks:{stepSize:25}}}});
-            renderMiniChart('langs', 'chartLangsMini', 'pie', langData);
-            renderMiniChart('sentModel', 'chartSentModelMini', 'bar', sentModelData, { scales: { x: { stacked: true }, y: { stacked: true } } });
-            renderMiniChart('hourly', 'chartHourlyMini', 'bar', hourlyData);
-            renderMiniChart('conf', 'chartConfMini', 'doughnut', confData);
-            renderMiniChart('len', 'chartLenMini', 'bar', lenData, { indexAxis: 'y' });
-        }
-
-        function renderMiniChart(key, canvasId, type, data, extraOptions = {}) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if(charts[key]) charts[key].destroy();
-            
-            const defaultOptions = {
-                indexAxis: extraOptions.indexAxis || 'x', // Support Horizontal Bar
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: (type === 'radar' || type === 'doughnut' || type === 'pie') ? {} : {
-                    x: { ticks: { display: false }, grid: { display: false }, stacked: extraOptions?.scales?.x?.stacked },
-                    y: { ticks: { display: false }, grid: { display: false }, stacked: extraOptions?.scales?.y?.stacked }
+            function switchTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                
+                const activeDiv = document.getElementById(`tab-${tabName}`);
+                
+                if(tabName === 'analysis') {
+                    activeDiv.style.display = 'flex';
+                    document.body.classList.add('mode-analysis');
+                } else {
+                    activeDiv.style.display = 'block';
+                    document.body.classList.remove('mode-analysis');
+                    document.body.style.backgroundColor = 'var(--nc-bg-dark)';
+                    resetAnalysisState();
+                    
+                    if(tabName === 'history') loadHistoryData(0);
+                    if(tabName === 'dashboard') updateDashboard();
                 }
-            };
+                
+                event.currentTarget.classList.add('active');
+            }
 
-            charts[key] = new Chart(ctx, {
-                type: type,
-                data: data,
-                options: defaultOptions
+            document.getElementById('inputText').addEventListener('input', (e) => {
+                if(e.target.value.trim() === '') {
+                    resetAnalysisState();
+                }
             });
-            charts[key].fullData = data; 
-            charts[key].chartType = type;
-            charts[key].extraOptions = extraOptions; // Save for modal
-        }
 
-        function openChartModal(key) {
-            const modal = document.getElementById('chartModal');
-            const canvas = document.getElementById('modalCanvas');
-            const sourceChart = charts[key];
-            if(!sourceChart) return;
+            async function analyzeSentiment() {
+                const text = document.getElementById('inputText').value;
+                const model = document.getElementById('modelSelect').value;
+                if(!text.trim()) return;
 
-            modal.style.display = 'flex';
-            if(modalChart) modalChart.destroy();
+                const btn = document.querySelector('.btn-analyze');
+                btn.disabled = true; btn.innerText = '...';
 
-            const chartData = JSON.parse(JSON.stringify(sourceChart.fullData));
-            const ctx = canvas.getContext('2d');
+                try {
+                    const res = await fetch(`${API_URL}/predict`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text, algorithm: model })
+                    });
+
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+                    const data = await res.json();
+                    applyVisuals((data.previsao || '').trim().toLowerCase(), data.probabilidade);
+                } catch (err) { 
+                    console.error("Fetch Error:", err);
+                    alert('Erro na conexão com a API.'); 
+                }
+                finally { btn.disabled = false; btn.innerText = 'PROCESSAR'; }
+            }
+
+            function applyVisuals(sentiment, prob) {
+                const config = visualMap[sentiment] || visualMap['default'];
+                document.body.setAttribute('data-sentiment', config.color);
+                document.getElementById('wordLeft').innerText = config.wordL;
+                document.getElementById('wordRight').innerText = config.wordR;
+                const box = document.getElementById('resultBox');
+                box.style.display = 'block';
+                document.getElementById('resultEmoji').innerText = config.icon;
+                document.getElementById('resultLabel').innerText = sentiment.toUpperCase();
+                document.getElementById('resultProb').innerText = `Confiança: ${(prob*100).toFixed(1)}%`;
+            }
+
+            async function loadHistoryData(page = 0) {
+                const size = 10;
+                try {
+                    const res = await fetch(`${API_URL}/history?page=${page}&size=${size}&sort=createdAt,desc`);
+                    const data = await res.json();
+                    
+                    currentPage = data.number;
+                    totalPages = data.totalPages;
+
+                    const tbody = document.querySelector('#historyTable tbody');
+                    tbody.innerHTML = '';
+                    
+                    data.content.forEach(item => {
+                        const tr = document.createElement('tr');
+                        let pred = (item.prediction || '').trim().toLowerCase();
+                        let pill = ['positive', 'positivo'].includes(pred) ? 'pill-pos' : (['negative', 'negativo'].includes(pred) ? 'pill-neg' : '');
+                        const dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
+                        tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td>${item.language || 'N/A'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
+                        tbody.appendChild(tr);
+                    });
+
+                    document.getElementById('btn-first-page').disabled = data.first;
+                    document.getElementById('btn-prev-page').disabled = data.first;
+                    document.getElementById('btn-next-page').disabled = data.last;
+                    document.getElementById('btn-last-page').disabled = data.last;
+                    document.getElementById('page-info').innerText = `Página ${currentPage + 1} de ${totalPages}`;
+                } catch(e) {
+                    console.error("Failed to load history:", e);
+                }
+            }
             
-            // 1. DYNAMIC TITLES MAP
-            const titles = {
-                dist: 'Distribuição Geral de Sentimentos',
-                time: 'Evolução Temporal do Volume de Feedbacks',
-                models: 'Comparativo de Uso dos Modelos de IA',
-                radar: 'Índice de Confiança Média por Categoria',
-                langs: 'Distribuição por Idioma Detectado',
-                sentModel: 'Análise de Sentimento por Algoritmo',
-                hourly: 'Volume de Análises por Horário do Dia',
-                conf: 'Proporção de Níveis de Certeza (High vs Low)',
-                len: 'Distribuição por Tamanho do Texto (Caracteres)'
-            };
+            document.getElementById('btn-first-page').addEventListener('click', () => loadHistoryData(0));
+            document.getElementById('btn-prev-page').addEventListener('click', () => loadHistoryData(currentPage - 1));
+            document.getElementById('btn-next-page').addEventListener('click', () => loadHistoryData(currentPage + 1));
+            document.getElementById('btn-last-page').addEventListener('click', () => loadHistoryData(totalPages - 1));
 
-            // 2. SCALES CONFIGURATION
-            let modalScales = {};
-            
-            if (sourceChart.chartType === 'bar' || sourceChart.chartType === 'line') {
-                modalScales = {
-                    x: { 
-                        title: { display: true, text: (key === 'hourly' ? 'Hora do Dia' : 'Período'), color: '#aaa' },
-                        ticks: { color: '#ddd' }, 
-                        grid: { color: 'rgba(255,255,255,0.1)' }, 
-                        stacked: sourceChart.extraOptions?.scales?.x?.stacked 
+            async function updateDashboard() {
+                try {
+                    const endpoints = [
+                        'kpis', 'distribution', 'models', 'languages', 'hourly-peak',
+                        'sentiment-by-model', 'confidence-levels', 'feedback-length',
+                        'timeline', 'average-confidence'
+                    ];
+                    const promises = endpoints.map(e => fetch(`${API_URL}/analytics/${e}`));
+                    const responses = await Promise.all(promises);
+                    const jsonData = await Promise.all(responses.map(res => res.json()));
+
+                    const analyticsData = endpoints.reduce((acc, name, index) => {
+                        acc[name] = jsonData[index];
+                        return acc;
+                    }, {});
+
+                    // 1. KPIs
+                    document.getElementById('kpiTotal').innerText = analyticsData.kpis.totalAnalyses;
+                    document.getElementById('kpiRoi').innerText = `R$ ${(analyticsData.kpis.totalAnalyses*2.5).toFixed(2)}`;
+                    document.getElementById('kpiPositivity').innerText = `${analyticsData.kpis.positivityPercentage.toFixed(0)}%`;
+
+                    // 2. Distribution
+                    const distData = {
+                        labels: Object.keys(analyticsData.distribution.distribution),
+                        datasets: [{ 
+                            data: Object.values(analyticsData.distribution.distribution),
+                            backgroundColor: ['#28a745', '#dc3545', '#6c757d'], 
+                            borderColor: '#1e1e2f' 
+                        }]
+                    };
+                    renderMiniChart('dist', 'chartDistMini', 'doughnut', distData);
+
+                    // 3. Models Usage
+                    const modelData = {
+                        labels: Object.keys(analyticsData.models.usage),
+                        datasets: [{ 
+                            label: 'Análises', 
+                            data: Object.values(analyticsData.models.usage),
+                            backgroundColor: ['#9F4BBA', '#F90399', '#2E9EE0'] 
+                        }]
+                    };
+                    renderMiniChart('models', 'chartModelsMini', 'bar', modelData);
+                    
+                    // 4. Languages
+                    const langData = {
+                        labels: analyticsData.languages.labels,
+                        datasets: [{ data: analyticsData.languages.values, backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'] }]
+                    };
+                    renderMiniChart('langs', 'chartLangsMini', 'pie', langData);
+
+                    // 5. Hourly Peak
+                    const hourlyData = {
+                        labels: analyticsData['hourly-peak'].labels,
+                        datasets: [{ label: 'Volume', data: analyticsData['hourly-peak'].values, backgroundColor: '#2E9EE0' }]
+                    };
+                    renderMiniChart('hourly', 'chartHourlyMini', 'bar', hourlyData);
+
+                    // 6. Sentiment by Model
+                    const sentModelData = {
+                        labels: analyticsData['sentiment-by-model'].labels,
+                        datasets: analyticsData['sentiment-by-model'].datasets.map(d => ({...d, backgroundColor: d.label === 'Positivo' ? '#28a745' : d.label === 'Negativo' ? '#dc3545' : '#6c757d'}))
+                    };
+                    renderMiniChart('sentModel', 'chartSentModelMini', 'bar', sentModelData, { scales: { x: { stacked: true }, y: { stacked: true } } });
+
+                    // 7. Confidence Levels
+                    const confData = {
+                        labels: analyticsData['confidence-levels'].labels,
+                        datasets: [{ data: analyticsData['confidence-levels'].values, backgroundColor: ['#00e676', '#ffb74d'], borderWidth: 0 }]
+                    };
+                    renderMiniChart('conf', 'chartConfMini', 'doughnut', confData);
+
+                    // 8. Feedback Length
+                    const lenData = {
+                        labels: analyticsData['feedback-length'].labels,
+                        datasets: [{ label: 'Volume', data: analyticsData['feedback-length'].values, backgroundColor: ['#4BC0C0', '#FFCE56', '#FF6384'], indexAxis: 'y' }]
+                    };
+                    renderMiniChart('len', 'chartLenMini', 'bar', lenData, { indexAxis: 'y' });
+
+                    // 9. Timeline
+                    const timeData = {
+                        labels: analyticsData.timeline.labels,
+                        datasets: [{ label: 'Volume', data: analyticsData.timeline.values, borderColor: '#2E9EE0', backgroundColor: 'rgba(46,158,224,0.2)', fill: true, tension: 0.4 }]
+                    };
+                    renderMiniChart('time', 'chartTimeMini', 'line', timeData);
+
+                    // 10. Radar
+                    const radarData = {
+                        labels: analyticsData['average-confidence'].labels,
+                        datasets: [{ label: 'Confiança Média (%)', data: analyticsData['average-confidence'].values, backgroundColor: 'rgba(249,3,153,0.2)', borderColor: '#F90399' }]
+                    };
+                    renderMiniChart('radar', 'chartRadarMini', 'radar', radarData);
+
+                } catch(e) {
+                    console.error("Failed to update dashboard with analytics data:", e);
+                }
+            }
+
+            function renderMiniChart(key, canvasId, type, data, extraOptions = {}) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if(charts[key]) charts[key].destroy();
+                
+                const defaultOptions = {
+                    indexAxis: extraOptions.indexAxis || 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: (type === 'radar' || type === 'doughnut' || type === 'pie') ? {} : {
+                        x: { ticks: { display: false }, grid: { display: false }, ...extraOptions?.scales?.x },
+                        y: { ticks: { display: false }, grid: { display: false }, ...extraOptions?.scales?.y }
+                    }
+                };
+
+                charts[key] = new Chart(ctx, { type: type, data: data, options: defaultOptions });
+                charts[key].fullData = data;
+                charts[key].chartType = type;
+                charts[key].extraOptions = extraOptions;
+            }
+
+            function openChartModal(key) {
+                const modal = document.getElementById('chartModal');
+                const canvas = document.getElementById('modalCanvas');
+                const sourceChart = charts[key];
+                if(!sourceChart) return;
+
+                modal.style.display = 'flex';
+                if(modalChart) modalChart.destroy();
+
+                const chartData = JSON.parse(JSON.stringify(sourceChart.fullData));
+                const ctx = canvas.getContext('2d');
+                
+                const titles = {
+                    dist: 'Distribuição Geral de Sentimentos', time: 'Evolução Temporal do Volume de Feedbacks',
+                    models: 'Comparativo de Uso dos Modelos de IA', radar: 'Índice de Confiança Média por Categoria',
+                    langs: 'Distribuição por Idioma Detectado', sentModel: 'Análise de Sentimento por Algoritmo',
+                    hourly: 'Volume de Análises por Horário do Dia', conf: 'Proporção de Níveis de Certeza (High vs Low)',
+                    len: 'Distribuição por Tamanho do Texto (Caracteres)'
+                };
+
+                let modalScales = {};
+                if (sourceChart.chartType === 'bar' || sourceChart.chartType === 'line') {
+                    modalScales = {
+                        x: { title: { display: true, text: (key === 'hourly' ? 'Hora do Dia' : 'Período'), color: '#aaa' }, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.1)' }, ...sourceChart.extraOptions?.scales?.x },
+                        y: { title: { display: true, text: 'Qtd. de Análises', color: '#aaa' }, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.1)' }, ...sourceChart.extraOptions?.scales?.y }
+                    };
+                } else if (sourceChart.chartType === 'radar') {
+                    modalScales = { r: { min: 0, max: 100, ticks: { backdropColor: 'transparent', color: '#fff', stepSize: 20 }, grid: { color: 'rgba(255,255,255,0.2)' }, pointLabels: { color: '#fff', font: { size: 14 } }, angleLines: { color: 'rgba(255,255,255,0.1)' } } };
+                }
+
+                const modalOptions = {
+                    indexAxis: sourceChart.extraOptions?.indexAxis || 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: true, labels: { color: '#fff', font: { size: 14 } } },
+                        title: { display: true, text: titles[key] || 'Visualização Detalhada', color: '#fff', font: { size: 20 } }
                     },
-                    y: { 
-                        title: { display: true, text: 'Qtd. de Análises', color: '#aaa' },
-                        ticks: { color: '#ddd' }, 
-                        grid: { color: 'rgba(255,255,255,0.1)' }, 
-                        stacked: sourceChart.extraOptions?.scales?.y?.stacked 
-                    }
+                    scales: modalScales
                 };
-            } else if (sourceChart.chartType === 'radar') {
-                modalScales = {
-                    r: { 
-                        min: 0,
-                        max: 100,
-                        ticks: { backdropColor: 'transparent', color: '#fff', stepSize: 20 }, 
-                        grid: { color: 'rgba(255,255,255,0.2)' },
-                        pointLabels: { color: '#fff', font: { size: 14 } },
-                        angleLines: { color: 'rgba(255,255,255,0.1)' }
-                    }
-                };
+
+                setTimeout(() => { modalChart = new Chart(ctx, { type: sourceChart.chartType, data: chartData, options: modalOptions }); }, 50);
             }
 
-            const modalOptions = {
-                indexAxis: sourceChart.extraOptions?.indexAxis || 'x',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: true, labels: { color: '#fff', font: { size: 14 } } },
-                    title: { display: true, text: titles[key] || 'Visualização Detalhada', color: '#fff', font: { size: 20 } }
-                },
-                scales: modalScales
-            };
-
-            setTimeout(() => {
-                modalChart = new Chart(ctx, {
-                    type: sourceChart.chartType,
-                    data: chartData,
-                    options: modalOptions
-                });
-            }, 50);
-        }
-
-        // --- NEW MODAL CLOSING LOGIC ---
-        function closeModal(e) {
-            // Close if clicking the background OR the close-modal span
-            if (e.target.id === 'chartModal' || e.target.classList.contains('close-modal')) {
-                const modal = document.getElementById('chartModal');
-                modal.style.display = 'none';
-                if(modalChart) {
-                    modalChart.destroy();
-                    modalChart = null;
-                }
-            }
-        }
-
-        // ESC Key Listener
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modal = document.getElementById('chartModal');
-                if (modal.style.display === 'flex') {
+            function closeModal(e) {
+                if (e.target.id === 'chartModal' || e.target.classList.contains('close-modal')) {
+                    const modal = document.getElementById('chartModal');
                     modal.style.display = 'none';
-                    if(modalChart) {
-                        modalChart.destroy();
-                        modalChart = null;
-                    }
+                    if(modalChart) { modalChart.destroy(); modalChart = null; }
                 }
             }
-        });
 
-        // INIT PARTICLES
-        const container = document.getElementById('particles');
-        for(let i=0; i<50; i++) {
-            const p = document.createElement('i');
-            p.className = 'fas fa-puzzle-piece particle';
-            p.style.left = Math.random()*100+'%';
-            p.style.animationDuration = (Math.random()*3+3)+'s';
-            p.style.animationDelay = Math.random()*5+'s';
-            container.appendChild(p);
-        }
-    </script>
-</body>
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('chartModal');
+                    if (modal.style.display === 'flex') closeModal({target: modal});
+                }
+            });
+
+            // INIT PARTICLES
+            const container = document.getElementById('particles');
+            for(let i=0; i<50; i++) {
+                const p = document.createElement('i');
+                p.className = 'fas fa-puzzle-piece particle';
+                p.style.left = Math.random()*100+'%';
+                p.style.animationDuration = (Math.random()*3+3)+'s';
+                p.style.animationDelay = Math.random()*5+'s';
+                container.appendChild(p);
+            }
+        </script>
+
+    </body>
+
 </html>
