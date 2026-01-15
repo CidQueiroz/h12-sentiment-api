@@ -37,7 +37,7 @@ class SentimentAnalysisControllerTest {
     void shouldReturnSentimentAnalysis() {
         InputSentimentDTO input = new InputSentimentDTO();
         input.setText("Estou muito feliz!");
-        input.setModel_type("svm");
+        input.setAlgorithm("svm");
 
         OutputSentimentDTO output = new OutputSentimentDTO("Positivo", 0.95);
 

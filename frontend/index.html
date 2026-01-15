@@ -71,7 +71,7 @@
             <div class="table-container" style="overflow-x: auto;">
                 <table id="historyTable">
                     <thead>
-                        <tr><th>ID</th><th>Data</th><th>Modelo</th><th>Feedback</th><th>Sentimento</th><th>Confiança</th></tr>
+                        <tr><th>ID</th><th>Data</th><th>Modelo</th><th>Idioma</th><th>Feedback</th><th>Sentimento</th><th>Confiança</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -205,7 +205,7 @@
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, model_type: model })
+                    body: JSON.stringify({ text, algorithm: model })
                 });
                 const data = await res.json();
 
@@ -241,7 +241,7 @@
                     let pill = ['positive', 'positivo'].includes(pred) ? 'pill-pos' : (['negative', 'negativo'].includes(pred) ? 'pill-neg' : '');
 
                     const dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
-                    tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
+                    tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td>${item.language || 'N/A'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
                     tbody.appendChild(tr);
                 });
                 updateDashboard(globalData);
@@ -297,8 +297,20 @@
                 const f = data.filter(i => preds.includes((i.prediction||'').toLowerCase()));
                 return f.length ? (f.reduce((a,c)=>a+c.probability,0)/f.length*100).toFixed(1) : 0;
             };
+
             const radarData = {
-                labels: ['Positivo', 'Negativo', 'Neutro'],
+                labels: ['Positivo', 'Negativo'], 
+                datasets: [{ 
+                    label: 'Confiança Média (%)', 
+                    data: [
+                        getAvg(['positive','positivo']), 
+                        getAvg(['negative','negativo'])
+                    ], 
+                    // Cores Semânticas: Verde para Positivo, Vermelho para Negativo
+                    backgroundColor: ['#2ecc71', '#e74c3c'], 
+                    barPercentage: 0.6, // Deixa as barras mais elegantes/finas
+                    borderWidth: 0
+                }]
             };
 
             // 5. Languages
@@ -364,7 +376,7 @@
             renderMiniChart('dist', 'chartDistMini', 'doughnut', distData);
             renderMiniChart('time', 'chartTimeMini', 'line', timeData);
             renderMiniChart('models', 'chartModelsMini', 'bar', modelData);
-            renderMiniChart('radar', 'chartRadarMini', 'radar', radarData);
+            renderMiniChart('radar', 'chartRadarMini', 'bar', radarData, {indexAxis: 'y',scales:{x:{min:0,max:100,ticks:{stepSize:25}}}});
             renderMiniChart('langs', 'chartLangsMini', 'pie', langData);
             renderMiniChart('sentModel', 'chartSentModelMini', 'bar', sentModelData, { scales: { x: { stacked: true }, y: { stacked: true } } });
             renderMiniChart('hourly', 'chartHourlyMini', 'bar', hourlyData);

@@ -21,7 +21,7 @@ app.add_middleware(
 # --- Modelos de Entrada e Saída ---
 class ModelInput(BaseModel):
     text: str
-    model_type: str # 'svm', 'nb' ou 'lr'
+    algorithm: str # 'svm', 'nb' ou 'lr'
 
 class ModelOutput(BaseModel):
     previsao: str
@@ -37,7 +37,8 @@ def clean_text(text: str) -> str:
     """
     text = text.lower()
     text = re.sub(r'http\S+|www\.\S+', '', text)
-    text = re.sub(r'[^\w\s]', '', text)
+    # Agora remove caracteres especiais, mantendo acentos
+    text = re.sub(r'[^a-zà-ÿáéíóúãõñç\s]', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
@@ -114,19 +115,23 @@ async def predict(input_data: ModelInput):
         lang = 'pt'
 
     # 3. Selecionar Algoritmo
-    model_type = input_data.model_type.lower()
-    model_key = f"{model_type}_{lang}"
+    algorithm = input_data.algorithm.lower()
+    model_key = f"{algorithm}_{lang}"
     
     if model_key not in models:
-        raise HTTPException(status_code=400, detail=f"Modelo '{model_type}' para o idioma '{lang}' não encontrado.")
+        raise HTTPException(status_code=400, detail=f"Modelo '{algorithm}' para o idioma '{lang}' não encontrado.")
 
     model = models[model_key]
     tfidf = tfidfs[lang]
 
     # 4. Predição
     text_vec = tfidf.transform([cleaned_text])
-    prediction = model.predict(text_vec)[0]
+    prediction_int = model.predict(text_vec)[0]
     
+    # Mapeia a predição numérica para o label de string correspondente
+    prediction_map = {0: "Negativo", 1: "Positivo"}
+    prediction = prediction_map.get(prediction_int, "Indefinido")
+
     prob = 0.5
     if hasattr(model, 'predict_proba'):
         prob = np.max(model.predict_proba(text_vec)[0])
@@ -139,5 +144,5 @@ async def predict(input_data: ModelInput):
         "previsao": prediction,
         "probabilidade": float(prob),
         "idioma": lang,
-        "algoritmo": model_type.upper()
+        "algoritmo": algorithm.upper()
     }

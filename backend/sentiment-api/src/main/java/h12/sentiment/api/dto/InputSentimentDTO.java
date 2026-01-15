@@ -8,40 +8,40 @@ import jakarta.validation.constraints.NotBlank;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class InputSentimentDTO {
 
-  @NotBlank(message = "O campo 'text' não pode estar vazio.")
-  private String text;
+    @NotBlank(message = "O campo 'text' não pode estar vazio.")
+    private String text;
 
-  @NotBlank(message = "O campo 'model_type' não pode estar vazio.")
-  private String modelType;
+    @NotBlank(message = "O campo 'algorithm' não pode estar vazio.")
+    private String algorithm;
 
-  public InputSentimentDTO() {
-  }
+    public InputSentimentDTO() {
+    }
 
-  public InputSentimentDTO(String text, String modelType) {
-    this.text = text;
-    this.modelType = modelType;
-  }
+    public InputSentimentDTO(String text, String algorithm) {
+        this.text = text;
+        this.algorithm = algorithm;
+    }
 
-  public String getText() {
-    return text;
-  }
+    public String getText() {
+        return text;
+    }
 
-  public void setText(String text) {
-    this.text = text;
-  }
+    public void setText(String text) {
+        this.text = text;
+    }
 
-  public String getModelType() {
-    return modelType;
-  }
+    public String getAlgorithm() {
+        return algorithm;
+    }
 
-  public void setModelType(String modelType) {
-    this.modelType = modelType;
-  }
+    public void setAlgorithm(String algorithm) {
+        this.algorithm = algorithm;
+    }
 
-  public SentimentAnalysisEntity toEntity() {
-    return SentimentAnalysisEntity.builder()
-        .originalText(this.text)
-        .modelType(this.modelType)
-        .build();
-  }
+    public SentimentAnalysisEntity toEntity() {
+        return SentimentAnalysisEntity.builder()
+                .originalText(this.text)
+                .modelType(this.algorithm) // Aqui fazemos a ponte!
+                .build();
+    }
 }
