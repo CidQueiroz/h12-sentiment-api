@@ -1,22 +1,15 @@
 package h12.sentiment.api.dto;
 
-import h12.sentiment.api.entity.SentimentAnalysisEntity;
-import java.time.LocalDateTime;
+import h12.sentiment.api.model.SentimentAnalysis;
 
-public record SentimentDetailedDTO(
-    Long id,
-    String text,
-    String previsao,
-    Double probabilidade,
-    String idioma,
-    LocalDateTime createdAt) {
-  public SentimentDetailedDTO(SentimentAnalysisEntity e) {
+public record SentimentDetailedDTO(Long id, String text, String previsao, Double probabilidade, String idioma) {
+
+  public SentimentDetailedDTO(SentimentAnalysis sentimentAnalysis) {
     this(
-        e.getId(),
-        e.getOriginalText(),
-        e.getPrediction(),
-        e.getProbability(),
-        e.getLanguage(),
-        e.getCreatedAt());
+        sentimentAnalysis.getId(),
+        sentimentAnalysis.getText(),
+        sentimentAnalysis.getPrevisao(),
+        sentimentAnalysis.getProbabilidade(),
+        sentimentAnalysis.getIdioma());
   }
 }

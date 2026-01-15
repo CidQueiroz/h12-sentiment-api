@@ -208,8 +208,7 @@
                     body: JSON.stringify({ text, algorithm: model })
                 });
                 const data = await res.json();
-
-              applyVisuals((data.previsao || '').trim().toLowerCase(), data.probabilidade);
+                applyVisuals((data.previsao || '').trim().toLowerCase(), data.probabilidade);
             } catch (err) { alert('Erro na conexão.'); }
             finally { btn.disabled = false; btn.innerText = 'PROCESSAR'; }
         }
@@ -236,10 +235,8 @@
                 tbody.innerHTML = '';
                 sorted.forEach(item => {
                     const tr = document.createElement('tr');
-
                     let pred = (item.prediction || '').trim().toLowerCase();
                     let pill = ['positive', 'positivo'].includes(pred) ? 'pill-pos' : (['negative', 'negativo'].includes(pred) ? 'pill-neg' : '');
-
                     const dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
                     tr.innerHTML = `<td>#${item.id}</td><td>${dateStr}</td><td>${item.modelType}</td><td>${item.language || 'N/A'}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.originalText}</td><td><span class="pill ${pill}">${item.prediction}</span></td><td>${(item.probability*100).toFixed(0)}%</td>`;
                     tbody.appendChild(tr);
@@ -252,7 +249,6 @@
              const pos = data.filter(i => ['positive', 'positivo'].includes((i.prediction||'').toLowerCase())).length;
             const neg = data.filter(i => ['negative', 'negativo'].includes((i.prediction||'').toLowerCase())).length;
             const neu = data.filter(i => ['neutral', 'neutro'].includes((i.prediction||'').toLowerCase())).length;
-
             const total = data.length;
 
             document.getElementById('kpiTotal').innerText = total;
