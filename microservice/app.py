@@ -126,11 +126,20 @@ async def predict(input_data: ModelInput):
 
     # 4. Predição
     text_vec = tfidf.transform([cleaned_text])
-    prediction_int = model.predict(text_vec)[0]
-    
-    # Mapeia a predição numérica para o label de string correspondente
-    prediction_map = {0: "Negativo", 1: "Positivo"}
-    prediction = prediction_map.get(prediction_int, "Indefinido")
+    raw_prediction = model.predict(text_vec)[0]
+
+    # Lógica de mapeamento robusta para lidar com modelos antigos e novos
+    prediction = "Indefinido"
+    if isinstance(raw_prediction, (int, np.integer)):
+        # Modelo novo (PT) retorna 0 ou 1
+        prediction_map = {0: "Negativo", 1: "Positivo"}
+        prediction = prediction_map.get(raw_prediction, "Indefinido")
+    elif isinstance(raw_prediction, str):
+        # Modelos antigos (EN, ES) retornam strings
+        if raw_prediction.lower() in ["positivo", "positive"]:
+            prediction = "Positivo"
+        elif raw_prediction.lower() in ["negativo", "negative"]:
+            prediction = "Negativo"
 
     prob = 0.5
     if hasattr(model, 'predict_proba'):
