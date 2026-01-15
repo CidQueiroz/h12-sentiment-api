@@ -6,12 +6,13 @@ import h12.sentiment.api.dto.OutputSentimentDTO;
 import h12.sentiment.api.entity.SentimentAnalysisEntity;
 import h12.sentiment.api.repository.SentimentAnalysisRepository;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+
+import java.util.List;
 
 @Service
 @Primary
@@ -34,22 +35,28 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
                 .retrieve()
                 .bodyToMono(MicroserviceResponseDTO.class)
                 .flatMap(response -> {
+                    // 1. Cria o objeto de resposta para o usuário imediatamente
                     OutputSentimentDTO output = new OutputSentimentDTO(response.previsao(), response.probabilidade());
+                    
+                    // 2. Salva no banco de forma assíncrona (sem travar a resposta)
                     return saveAnalysis(input, response).thenReturn(output);
                 });
     }
 
+    // AQUI O SEGREDO DO MERGE:
     private Mono<SentimentAnalysisEntity> saveAnalysis(InputSentimentDTO input, MicroserviceResponseDTO response) {
         return Mono.fromCallable(() -> {
-            SentimentAnalysisEntity entity = SentimentAnalysisEntity.builder()
-                    .originalText(input.getText())
-                    .modelType(input.getAlgorithm())
-                    .prediction(response.previsao())
-                    .probability(response.probabilidade())
-                    .language(response.idioma())
-                    .build();
+            // Usamos o método toEntity() que consertamos no passo anterior (Vem da Main)
+            SentimentAnalysisEntity entity = input.toEntity();
+            
+            // Preenchemos o resto com a resposta do Python
+            entity.setPrediction(response.previsao());
+            entity.setProbability(response.probabilidade());
+            entity.setLanguage(response.idioma());
+
+            // Salvamos no banco
             return repository.save(entity);
-        }).subscribeOn(Schedulers.boundedElastic());
+        }).subscribeOn(Schedulers.boundedElastic()); // Mantemos isso da FIX para não travar o servidor
     }
 
     @Override
@@ -58,7 +65,7 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     }
 
     @Override
-    public Mono<java.util.List<SentimentAnalysisEntity>> getAllAnalyses() {
+    public Mono<List<SentimentAnalysisEntity>> getAllAnalyses() {
         return Mono.fromCallable(repository::findAll)
                 .flatMapMany(reactor.core.publisher.Flux::fromIterable)
                 .collectList()
