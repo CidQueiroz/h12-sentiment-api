@@ -1,16 +1,6 @@
 package h12.sentiment.api.service;
 
-import h12.sentiment.api.dto.ChartDataDTO;
-import h12.sentiment.api.dto.ConfidenceProjection;
-import h12.sentiment.api.dto.InputSentimentDTO;
-import h12.sentiment.api.dto.KpiDTO;
-import h12.sentiment.api.dto.MicroserviceResponseDTO;
-import h12.sentiment.api.dto.ModelUsageDTO;
-import h12.sentiment.api.dto.OutputSentimentDTO;
-import h12.sentiment.api.dto.SentimentByModelProjection;
-import h12.sentiment.api.dto.SentimentDistributionDTO;
-import h12.sentiment.api.dto.StackedChartDataDTO;
-import h12.sentiment.api.dto.TimelineProjection;
+import h12.sentiment.api.dto.*;
 import h12.sentiment.api.entity.SentimentAnalysisEntity;
 import h12.sentiment.api.repository.SentimentAnalysisRepository;
 import org.springframework.context.annotation.Primary;
@@ -23,15 +13,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Collections;
-
+import java.util.stream.IntStream;
 
 @Service
 @Primary
@@ -41,7 +25,6 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     private final SentimentAnalysisRepository repository;
     private final List<String> ALL_MODELS = Arrays.asList("svm", "nb", "lr");
     private final List<String> ALL_SENTIMENTS = Arrays.asList("Positivo", "Negativo", "Neutro");
-
 
     public SentimentAnalysisServiceImpl(WebClient sentimentWebClient, SentimentAnalysisRepository repository) {
         this.sentimentWebClient = sentimentWebClient;
@@ -121,9 +104,9 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     @Override
     public Mono<ChartDataDTO> getLanguageDistribution() {
         return Mono.fromCallable(() -> {
-            List<h12.sentiment.api.dto.LanguageProjection> projections = repository.findLanguageDistribution();
-            List<String> labels = projections.stream().map(h12.sentiment.api.dto.LanguageProjection::getLanguage).collect(Collectors.toList());
-            List<Long> values = projections.stream().map(h12.sentiment.api.dto.LanguageProjection::getCount).collect(Collectors.toList());
+            List<LanguageProjection> projections = repository.findLanguageDistribution();
+            List<String> labels = projections.stream().map(LanguageProjection::getLanguage).collect(Collectors.toList());
+            List<Long> values = projections.stream().map(LanguageProjection::getCount).collect(Collectors.toList());
             return new ChartDataDTO(labels, values);
         }).subscribeOn(Schedulers.boundedElastic());
     }
@@ -131,18 +114,18 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     @Override
     public Mono<ChartDataDTO> getHourlyDistribution() {
         return Mono.fromCallable(() -> {
-            List<h12.sentiment.api.dto.HourlyProjection> projections = repository.findHourlyDistribution();
-            Map<Integer, Long> hourlyCounts = projections.stream()
+            List<HourlyProjection> projections = repository.findHourlyDistribution();
+            Map<String, Long> hourlyCounts = projections.stream()
                     .collect(Collectors.toMap(
-                            h12.sentiment.api.dto.HourlyProjection::getHour,
-                            h12.sentiment.api.dto.HourlyProjection::getCount
+                            HourlyProjection::getHour,
+                            HourlyProjection::getCount
                     ));
 
-            List<String> labels = java.util.stream.IntStream.range(0, 24)
-                    .mapToObj(i -> String.format("%02dh", i))
+            List<String> labels = IntStream.range(0, 24)
+                    .mapToObj(i -> String.format("%02d", i))
                     .collect(Collectors.toList());
-            List<Long> values = java.util.stream.IntStream.range(0, 24)
-                    .mapToObj(i -> hourlyCounts.getOrDefault(i, 0L))
+            List<Long> values = labels.stream()
+                    .map(label -> hourlyCounts.getOrDefault(label, 0L))
                     .collect(Collectors.toList());
 
             return new ChartDataDTO(labels, values);
@@ -153,36 +136,28 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     public Mono<StackedChartDataDTO> getSentimentByModel() {
         return Mono.fromCallable(() -> {
             List<SentimentByModelProjection> projections = repository.findSentimentByModel();
-
-            // Group by modelType
             Map<String, Map<String, Long>> groupedData = projections.stream()
                 .collect(Collectors.groupingBy(
                     SentimentByModelProjection::getModelType,
                     Collectors.toMap(SentimentByModelProjection::getPrediction, SentimentByModelProjection::getCount)
                 ));
 
-            // Prepare datasets for Chart.js
-            List<Map<String, Long>> datasets = ALL_MODELS.stream().map(model -> {
-                Map<String, Long> modelSentimentCounts = new LinkedHashMap<>();
-                modelSentimentCounts.put("model", (long) model.hashCode()); // Dummy ID or other identifier if needed
-                for (String sentiment : ALL_SENTIMENTS) {
-                    modelSentimentCounts.put(sentiment, groupedData.getOrDefault(model, Collections.emptyMap()).getOrDefault(sentiment, 0L));
-                }
-                return modelSentimentCounts;
+            List<StackedChartDataDTO.Dataset> datasets = ALL_SENTIMENTS.stream().map(sentiment -> {
+                List<Long> counts = ALL_MODELS.stream()
+                    .map(model -> groupedData.getOrDefault(model, Collections.emptyMap()).getOrDefault(sentiment, 0L))
+                    .collect(Collectors.toList());
+                return new StackedChartDataDTO.Dataset(sentiment, counts);
             }).collect(Collectors.toList());
             
-            // Ensure labels order
-            List<String> labels = ALL_MODELS;
-
-            return new StackedChartDataDTO(labels, datasets);
+            return new StackedChartDataDTO(ALL_MODELS, datasets);
         }).subscribeOn(Schedulers.boundedElastic());
     }
-    
+
     @Override
     public Mono<ChartDataDTO> getConfidenceLevels() {
         return Mono.fromCallable(() -> {
-            long total = repository.countTotalAnalyses();
-            long highConf = repository.findAll().stream().filter(e -> e.getProbability() >= 0.9).count();
+            long total = repository.count();
+            long highConf = repository.findAll().stream().filter(e -> e.getProbability() != null && e.getProbability() >= 0.9).count();
             long lowConf = total - highConf;
             return new ChartDataDTO(Arrays.asList("Alta (>90%)", "Média/Baixa"), Arrays.asList(highConf, lowConf));
         }).subscribeOn(Schedulers.boundedElastic());
@@ -191,10 +166,11 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     @Override
     public Mono<ChartDataDTO> getFeedbackLength() {
         return Mono.fromCallable(() -> {
-            long shortFeedback = repository.findAll().stream().filter(e -> e.getOriginalText().length() < 20).count();
-            long mediumFeedback = repository.findAll().stream().filter(e -> e.getOriginalText().length() >= 20 && e.getOriginalText().length() <= 100).count();
-            long longFeedback = repository.findAll().stream().filter(e -> e.getOriginalText().length() > 100).count();
-            return new ChartDataDTO(Arrays.asList("Curtos (<20)", "Médios (20-100)", "Longos (>100)"), Arrays.asList(shortFeedback, mediumFeedback, longFeedback));
+            List<SentimentAnalysisEntity> all = repository.findAll();
+            long shortFeedback = all.stream().filter(e -> e.getOriginalText().length() < 50).count();
+            long mediumFeedback = all.stream().filter(e -> e.getOriginalText().length() >= 50 && e.getOriginalText().length() <= 140).count();
+            long longFeedback = all.stream().filter(e -> e.getOriginalText().length() > 140).count();
+            return new ChartDataDTO(Arrays.asList("Curtos (<50)", "Médios (50-140)", "Longos (>140)"), Arrays.asList(shortFeedback, mediumFeedback, longFeedback));
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -202,12 +178,23 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
     public Mono<ChartDataDTO> getTimeline() {
         return Mono.fromCallable(() -> {
             List<TimelineProjection> projections = repository.findTimeline();
-            List<String> labels = projections.stream()
-                    .map(TimelineProjection::getDate)
-                    .collect(Collectors.toList());
-            List<Long> values = projections.stream()
-                    .map(TimelineProjection::getCount)
-                    .collect(Collectors.toList());
+            Map<LocalDate, Long> countsByDate = projections.stream()
+                .collect(Collectors.toMap(
+                    p -> LocalDate.parse(p.getDate()),
+                    TimelineProjection::getCount
+                ));
+
+            List<String> labels = new ArrayList<>();
+            List<Long> values = new ArrayList<>();
+            if (!countsByDate.isEmpty()) {
+                LocalDate minDate = Collections.min(countsByDate.keySet());
+                LocalDate maxDate = Collections.max(countsByDate.keySet());
+
+                for (LocalDate date = minDate; !date.isAfter(maxDate); date = date.plusDays(1)) {
+                    labels.add(date.toString());
+                    values.add(countsByDate.getOrDefault(date, 0L));
+                }
+            }
             return new ChartDataDTO(labels, values);
         }).subscribeOn(Schedulers.boundedElastic());
     }
@@ -217,12 +204,10 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
         return Mono.fromCallable(() -> {
             List<ConfidenceProjection> projections = repository.findAverageConfidenceBySentiment();
             List<String> labels = projections.stream()
-                    .sorted(Comparator.comparing(ConfidenceProjection::getSentiment)) // Ensure consistent order
                     .map(ConfidenceProjection::getSentiment)
                     .collect(Collectors.toList());
             List<Long> values = projections.stream()
-                    .sorted(Comparator.comparing(ConfidenceProjection::getSentiment)) // Ensure consistent order
-                    .map(p -> p.getAverageConfidence().longValue()) // Convert Double to Long for ChartDataDTO
+                    .map(p -> (long) (p.getAverageConfidence() * 100))
                     .collect(Collectors.toList());
             return new ChartDataDTO(labels, values);
         }).subscribeOn(Schedulers.boundedElastic());

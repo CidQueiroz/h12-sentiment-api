@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/sentiment")
-@CrossOrigin(origins = "*")
 public class SentimentAnalysisController {
 
   private SentimentAnalysisService service;

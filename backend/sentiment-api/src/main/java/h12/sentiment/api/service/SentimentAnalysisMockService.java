@@ -1,12 +1,6 @@
 package h12.sentiment.api.service;
 
-import h12.sentiment.api.dto.ChartDataDTO;
-import h12.sentiment.api.dto.InputSentimentDTO;
-import h12.sentiment.api.dto.KpiDTO;
-import h12.sentiment.api.dto.ModelUsageDTO;
-import h12.sentiment.api.dto.OutputSentimentDTO;
-import h12.sentiment.api.dto.SentimentDistributionDTO;
-import h12.sentiment.api.dto.StackedChartDataDTO;
+import h12.sentiment.api.dto.*;
 import h12.sentiment.api.entity.SentimentAnalysisEntity;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -24,32 +18,24 @@ import java.util.Map;
 
 @Service
 @Profile("mock")
-public class SentimentAnalysisMockService implements SentimentAnalysisService{
+public class SentimentAnalysisMockService implements SentimentAnalysisService {
 
     @Override
     public Mono<OutputSentimentDTO> createAnalysis(InputSentimentDTO inputSentimentDTO) {
-
-        if (inputSentimentDTO.getText() == null || inputSentimentDTO.getText().isEmpty()) {
-            return Mono.just(new OutputSentimentDTO("El texto está vacío.", 0.0));
-        }
-
         String text = inputSentimentDTO.getText().toLowerCase();
         String sentiment;
         double score;
 
-        if (text.contains("feliz") || text.contains("contento") || text.contains("alegre")) {
-            sentiment = "Sentimiento positivo 😊";
+        if (text.contains("feliz")) {
+            sentiment = "Positivo";
             score = 0.9;
-
-        } else if (text.contains("triste") || text.contains("mal") || text.contains("enojado")) {
-            sentiment = "Sentimiento negativo 😢";
+        } else if (text.contains("triste")) {
+            sentiment = "Negativo";
             score = 0.2;
-
         } else {
-            sentiment = "Sentimiento neutral 😐";
+            sentiment = "Neutro";
             score = 0.5;
         }
-
         return Mono.just(new OutputSentimentDTO(sentiment, score));
     }
 
@@ -60,26 +46,17 @@ public class SentimentAnalysisMockService implements SentimentAnalysisService{
 
     @Override
     public Mono<Page<SentimentAnalysisEntity>> getAllAnalyses(Pageable pageable) {
-        // Retorna uma página vazia para o mock
         return Mono.just(new PageImpl<>(Collections.emptyList(), pageable, 0));
     }
 
     @Override
     public Mono<SentimentDistributionDTO> getSentimentDistribution() {
-        Map<String, Long> distribution = new HashMap<>();
-        distribution.put("Positivo", 50L);
-        distribution.put("Negativo", 30L);
-        distribution.put("Neutro", 20L);
-        return Mono.just(new SentimentDistributionDTO(distribution));
+        return Mono.just(new SentimentDistributionDTO(Map.of("Positivo", 50L, "Negativo", 30L, "Neutro", 20L)));
     }
 
     @Override
     public Mono<ModelUsageDTO> getModelUsage() {
-        Map<String, Long> usage = new HashMap<>();
-        usage.put("svm", 40L);
-        usage.put("nb", 35L);
-        usage.put("lr", 25L);
-        return Mono.just(new ModelUsageDTO(usage));
+        return Mono.just(new ModelUsageDTO(Map.of("svm", 40L, "nb", 35L, "lr", 25L)));
     }
 
     @Override
@@ -94,19 +71,18 @@ public class SentimentAnalysisMockService implements SentimentAnalysisService{
 
     @Override
     public Mono<ChartDataDTO> getHourlyDistribution() {
-        return Mono.just(new ChartDataDTO(Arrays.asList("09h", "10h", "11h", "14h", "15h"), Arrays.asList(5L, 10L, 15L, 12L, 8L)));
+        return Mono.just(new ChartDataDTO(Arrays.asList("09", "10", "11", "14", "15"), Arrays.asList(5L, 10L, 15L, 12L, 8L)));
     }
 
     @Override
     public Mono<StackedChartDataDTO> getSentimentByModel() {
-        // Corrigido para retornar a estrutura que o frontend espera
         List<String> labels = Arrays.asList("svm", "nb", "lr");
-        List<Map<String, Long>> data = Arrays.asList(
-                Map.of("model", 1L, "Positivo", 15L, "Negativo", 5L, "Neutro", 0L), // Exemplo para SVM
-                Map.of("model", 2L, "Positivo", 10L, "Negativo", 4L, "Neutro", 1L), // Exemplo para NB
-                Map.of("model", 3L, "Positivo", 8L, "Negativo", 2L, "Neutro", 0L)   // Exemplo para LR
+        List<StackedChartDataDTO.Dataset> datasets = Arrays.asList(
+                new StackedChartDataDTO.Dataset("Positivo", Arrays.asList(15L, 10L, 8L)),
+                new StackedChartDataDTO.Dataset("Negativo", Arrays.asList(5L, 4L, 2L)),
+                new StackedChartDataDTO.Dataset("Neutro", Arrays.asList(0L, 1L, 0L))
         );
-        return Mono.just(new StackedChartDataDTO(labels, data));
+        return Mono.just(new StackedChartDataDTO(labels, datasets));
     }
 
     @Override
@@ -116,7 +92,7 @@ public class SentimentAnalysisMockService implements SentimentAnalysisService{
 
     @Override
     public Mono<ChartDataDTO> getFeedbackLength() {
-        return Mono.just(new ChartDataDTO(Arrays.asList("Curtos (<20)", "Médios (20-100)", "Longos (>100)"), Arrays.asList(40L, 45L, 15L)));
+        return Mono.just(new ChartDataDTO(Arrays.asList("Curtos (<50)", "Médios (50-140)", "Longos (>140)"), Arrays.asList(40L, 45L, 15L)));
     }
 
     @Override
