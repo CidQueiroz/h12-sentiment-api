@@ -1,6 +1,6 @@
 <div align="center">
 
-# H12 - Enterprise Customer Intelligence
+# H12 - Sentiment Intelligence
 ### De Feedback Bruto para Decisões Estratégicas via IA
 
 ![Java](https://img.shields.io/badge/Java%20(Spring)-17-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
