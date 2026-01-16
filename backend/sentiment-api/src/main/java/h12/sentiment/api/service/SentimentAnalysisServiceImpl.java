@@ -117,8 +117,9 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
             List<HourlyProjection> projections = repository.findHourlyDistribution();
             Map<String, Long> hourlyCounts = projections.stream()
                     .collect(Collectors.toMap(
-                            HourlyProjection::getHour,
-                            HourlyProjection::getCount
+                            p -> String.format("%02d", p.getHour()),
+                            HourlyProjection::getCount,
+                            Long::sum
                     ));
 
             List<String> labels = IntStream.range(0, 24)
@@ -139,7 +140,10 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
             Map<String, Map<String, Long>> groupedData = projections.stream()
                 .collect(Collectors.groupingBy(
                     SentimentByModelProjection::getModelType,
-                    Collectors.toMap(SentimentByModelProjection::getPrediction, SentimentByModelProjection::getCount)
+                    Collectors.groupingBy(
+                        SentimentByModelProjection::getPrediction,
+                        Collectors.summingLong(SentimentByModelProjection::getCount)
+                    )
                 ));
 
             List<StackedChartDataDTO.Dataset> datasets = ALL_SENTIMENTS.stream().map(sentiment -> {
@@ -181,7 +185,8 @@ public class SentimentAnalysisServiceImpl implements SentimentAnalysisService {
             Map<LocalDate, Long> countsByDate = projections.stream()
                 .collect(Collectors.toMap(
                     p -> LocalDate.parse(p.getDate()),
-                    TimelineProjection::getCount
+                    TimelineProjection::getCount,
+                    Long::sum
                 ));
 
             List<String> labels = new ArrayList<>();

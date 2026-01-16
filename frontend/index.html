@@ -388,9 +388,19 @@
                     // 10. Radar
                     const radarData = {
                         labels: analyticsData['average-confidence'].labels,
-                        datasets: [{ label: 'Confiança Média (%)', data: analyticsData['average-confidence'].values, backgroundColor: 'rgba(249,3,153,0.2)', borderColor: '#F90399' }]
+                        datasets: [{ 
+                            label: 'Confiança Média (%)', 
+                            data: analyticsData['average-confidence'].values, 
+                            backgroundColor: analyticsData['average-confidence'].labels.map(label => {
+                                if (label.toLowerCase().includes('positivo')) return '#2ecc71';
+                                if (label.toLowerCase().includes('negativo')) return '#e74c3c';
+                                return '#F90399'; // Default or other sentiments
+                            }),
+                            barPercentage: 0.6,
+                            borderWidth: 0
+                        }]
                     };
-                    renderMiniChart('radar', 'chartRadarMini', 'radar', radarData);
+                    renderMiniChart('radar', 'chartRadarMini', 'bar', radarData, {indexAxis: 'y',scales:{x:{min:0,max:100,ticks:{stepSize:25}}}});
 
                 } catch(e) {
                     console.error("Failed to update dashboard with analytics data:", e);

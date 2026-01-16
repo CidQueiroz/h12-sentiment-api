@@ -38,7 +38,7 @@ public class SentimentAnalysisController {
     this.service = service;
   }
 
-  @PostMapping
+  @PostMapping("/predict")
   public Mono<ResponseEntity<OutputSentimentDTO>> createAnalysis(@Valid @RequestBody InputSentimentDTO inputSentimentDTO) {
       return service.createAnalysis(inputSentimentDTO)
               .map(sentiment -> ResponseEntity.status(HttpStatus.OK).body(sentiment))
@@ -94,5 +94,15 @@ public class SentimentAnalysisController {
   @GetMapping("/analytics/feedback-length")
   public Mono<ChartDataDTO> getFeedbackLength() {
       return service.getFeedbackLength();
+  }
+
+  @GetMapping("/analytics/timeline")
+  public Mono<ChartDataDTO> getTimeline() {
+      return service.getTimeline();
+  }
+
+  @GetMapping("/analytics/average-confidence")
+  public Mono<ChartDataDTO> getAverageConfidenceBySentiment() {
+      return service.getAverageConfidenceBySentiment();
   }
 }
